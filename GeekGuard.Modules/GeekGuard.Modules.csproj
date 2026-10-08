@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The free, open-source modules. Each folder is one plugin; Pro plugins live in a separate private repo. -->
+  <PropertyGroup>
+    <RootNamespace>GeekGuard.Modules</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GeekGuard.Core\GeekGuard.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Each module keeps its SQL in its own Migrations folder, e.g. AntiFlood\Migrations\0001_initial.sql. -->
+    <EmbeddedResource Include="**\Migrations\*.sql" />
+  </ItemGroup>
+
+</Project>

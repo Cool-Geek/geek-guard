@@ -1,7 +1,9 @@
 using GeekGuard.Bot.Configuration;
 using GeekGuard.Bot.Gateway;
-using GeekGuard.Core.Data;
+using GeekGuard.Bot.Plugins;
+using GeekGuard.Core;
 using GeekGuard.Core.Data.Migrations;
+using GeekGuard.Modules.Diagnostics;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -17,8 +19,15 @@ builder.Services
         "Check User Secrets for extra spaces, quotes or placeholder text.")
     .ValidateOnStart();
 
-builder.Services.AddGeekGuardDatabase(builder.Configuration);
+builder.Services.AddGeekGuardCore(builder.Configuration);
 builder.Services.AddTelegramBot();
+
+// Plugins register services, so they load before the host is built; a console logger reports what loaded.
+using (var bootLog = LoggerFactory.Create(logging => logging.AddConsole()))
+{
+    builder.Services.AddGeekGuardPlugins(builder.Configuration, bootLog.CreateLogger("Plugins"),
+        typeof(DiagnosticsPlugin).Assembly);
+}
 
 var app = builder.Build();
 

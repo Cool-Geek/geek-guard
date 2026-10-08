@@ -27,7 +27,7 @@ public static class DatabaseServiceCollectionExtensions
         services.AddSingleton<MigrationRunner>();
 
         // Core tables come first; plugins add their own sources after this.
-        services.AddSingleton<IMigrationSource>(new EmbeddedMigrationSource("core", typeof(DatabaseOptions).Assembly));
+        services.AddSingleton<IMigrationSource>(new EmbeddedMigrationSource("core", typeof(DatabaseOptions).Assembly, "GeekGuard.Core.Migrations"));
 
         services.AddSingleton<UserRepository>();
         return services;

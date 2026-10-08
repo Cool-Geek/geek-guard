@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Shared building blocks for the bot and its plugins: database access, migrations and core data. -->
+  <!-- Shared building blocks for the bot and its plugins: database, groups, plugin contracts, pipeline. -->
   <PropertyGroup>
     <RootNamespace>GeekGuard.Core</RootNamespace>
   </PropertyGroup>
@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Telegram.Bot" Version="22.10.3.2" />
     <PackageReference Include="Npgsql" Version="10.0.3" />
     <PackageReference Include="Dapper" Version="2.1.89" />
   </ItemGroup>

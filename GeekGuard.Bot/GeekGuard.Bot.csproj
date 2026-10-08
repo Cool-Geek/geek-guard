@@ -15,10 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GeekGuard.Core\GeekGuard.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Telegram.Bot" Version="22.10.3.2" />
+    <ProjectReference Include="..\GeekGuard.Modules\GeekGuard.Modules.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,5 @@
 using GeekGuard.Bot.Configuration;
+using GeekGuard.Core.Messaging;
 using Microsoft.Extensions.Options;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
@@ -29,7 +30,7 @@ public sealed class UpdateReceiver(
             log.LogInformation("Using proxy {Proxy}", options.Value.Proxy);
 
         var me = await ConnectAsync(ct);
-        identity.Set(me);
+        identity.Initialize(me);
         log.LogInformation("Connected as @{Username} (id {Id})", identity.Username, identity.Id);
 
         var receiverOptions = new ReceiverOptions
