@@ -14,6 +14,13 @@ public sealed class TelegramOptions
     /// </summary>
     public string? Proxy { get; set; }
 
+    /// <summary>
+    /// True when the token has the shape BotFather gives out: digits, a colon, then the secret part.
+    /// Catches placeholders and copy-paste mistakes before Telegram is ever called.
+    /// </summary>
+    public static bool LooksValid(string? token) =>
+        token is not null && System.Text.RegularExpressions.Regex.IsMatch(token, @"^\d{5,}:[A-Za-z0-9_-]{30,}$");
+
     /// <summary>Shows only the bot id part of a token, so logs never leak the secret half.</summary>
     public static string Mask(string token)
     {

@@ -29,7 +29,11 @@ Requirements: .NET 8 SDK, PostgreSQL.
    ```
    dotnet user-secrets set "Telegram:Proxy" "socks5://127.0.0.1:10808"
    ```
-4. Run the `GeekGuard.Bot` project.
+4. Point it at PostgreSQL. The database is created and migrated automatically on first run:
+   ```
+   dotnet user-secrets set "ConnectionStrings:GeekGuard" "Host=localhost;Port=5432;Database=geekguard;Username=postgres;Password=..."
+   ```
+5. Run the `GeekGuard.Bot` project.
 
 ### Configuration
 
@@ -37,6 +41,13 @@ Requirements: .NET 8 SDK, PostgreSQL.
 | --- | --- | --- |
 | `Telegram:BotToken` | Token from @BotFather | User Secrets / env `Telegram__BotToken` |
 | `Telegram:Proxy` | Optional proxy URL | User Secrets / env `Telegram__Proxy` |
+| `ConnectionStrings:GeekGuard` | PostgreSQL connection string | User Secrets / env `ConnectionStrings__GeekGuard` |
+
+### Database migrations
+
+Schema changes are plain SQL files named `NNNN_description.sql` in a module's `Migrations` folder,
+embedded in its assembly and applied in order at startup. Applied versions are recorded in `schema_migrations`.
+Never edit a migration that has been released; add a new one.
 
 ---
 
@@ -55,8 +66,14 @@ Geek Guard (@geek_guard_bot) گروه‌های تلگرام را تمیز نگه
    ```json
    { "Telegram": { "BotToken": "123456:ABC..." } }
    ```
-3. اگر شبکه‌تان به تلگرام دسترسی ندارد، پروکسی را هم همان‌جا اضافه کنید:
+3. اگر شبکه‌تان به تلگرام دسترسی ندارد، پروکسی و رشته‌ی اتصال دیتابیس را هم همان‌جا اضافه کنید.
+   دیتابیس در اولین اجرا خودکار ساخته می‌شود:
    ```json
-   { "Telegram": { "BotToken": "123456:ABC...", "Proxy": "socks5://127.0.0.1:10808" } }
+   {
+     "Telegram": { "BotToken": "123456:ABC...", "Proxy": "socks5://127.0.0.1:10808" },
+     "ConnectionStrings": {
+       "GeekGuard": "Host=localhost;Port=5432;Database=geekguard;Username=postgres;Password=..."
+     }
+   }
    ```
 4. پروژه‌ی `GeekGuard.Bot` را اجرا کنید.
