@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>GeekGuard.Bot</RootNamespace>
+    <!-- Lets the bot token live in User Secrets on the developer's machine, never in the repository. -->
+    <UserSecretsId>01989455-a833-41e9-b228-f05e52a731e5</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Hosting, configuration, logging and user secrets come from the ASP.NET Core shared framework,
+         which ships with the .NET SDK: nothing extra to download. It will also host the Mini App later. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

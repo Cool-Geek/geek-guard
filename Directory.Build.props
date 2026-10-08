@@ -1,0 +1,17 @@
+<Project>
+  <!-- Settings shared by every project in the solution. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- CS1591: missing XML comment. Public APIs get comments by convention, not by compiler force. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <Authors>Cool Geek</Authors>
+    <Company>Cool Geek</Company>
+    <Product>Geek Guard</Product>
+    <Copyright>Copyright © Cool Geek</Copyright>
+  </PropertyGroup>
+</Project>
