@@ -1,5 +1,5 @@
 using GeekGuard.Bot.Configuration;
-using Microsoft.Extensions.Options;
+using GeekGuard.Bot.Gateway;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -12,11 +12,7 @@ builder.Services
         "Telegram:BotToken is missing. Set it with User Secrets (see README).")
     .ValidateOnStart();
 
+builder.Services.AddTelegramBot();
+
 var app = builder.Build();
-
-var log = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("GeekGuard");
-var telegram = app.Services.GetRequiredService<IOptions<TelegramOptions>>().Value;
-log.LogInformation("Geek Guard is starting in {Environment} mode", builder.Environment.EnvironmentName);
-log.LogInformation("Bot token loaded: {Token}", TelegramOptions.Mask(telegram.BotToken));
-
 await app.RunAsync();
