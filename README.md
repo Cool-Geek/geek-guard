@@ -1,7 +1,7 @@
 # Geek Guard
 
 **Telegram group protection with first-class Persian spam detection.**
-by [Cool Geek](https://github.com/coolgeek)
+by [Cool Geek](https://github.com/Cool-Geek)
 
 > 🚧 Under active development.
 

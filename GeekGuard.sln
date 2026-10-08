@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeekGuard.Core", "GeekGuard
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeekGuard.Modules", "GeekGuard.Modules\GeekGuard.Modules.csproj", "{8A2D4F6B-1C3E-4B5A-9D7F-2E4C6A8B0D1F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoolGeek.PersianText", "CoolGeek.PersianText\CoolGeek.PersianText.csproj", "{5E7A9C1B-3D2F-4A6E-8B0C-9F1D2E3A4B5C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoolGeek.PersianText.Tests", "CoolGeek.PersianText.Tests\CoolGeek.PersianText.Tests.csproj", "{6F8B0D2C-4E3A-4B7F-9C1D-0A2E3F4B5C6D}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6B1F2C3A-9C7E-4E0B-8F1D-3A2B5C4D6E7F}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
@@ -36,6 +40,14 @@ Global
 		{8A2D4F6B-1C3E-4B5A-9D7F-2E4C6A8B0D1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8A2D4F6B-1C3E-4B5A-9D7F-2E4C6A8B0D1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8A2D4F6B-1C3E-4B5A-9D7F-2E4C6A8B0D1F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E7A9C1B-3D2F-4A6E-8B0C-9F1D2E3A4B5C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E7A9C1B-3D2F-4A6E-8B0C-9F1D2E3A4B5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E7A9C1B-3D2F-4A6E-8B0C-9F1D2E3A4B5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E7A9C1B-3D2F-4A6E-8B0C-9F1D2E3A4B5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F8B0D2C-4E3A-4B7F-9C1D-0A2E3F4B5C6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F8B0D2C-4E3A-4B7F-9C1D-0A2E3F4B5C6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F8B0D2C-4E3A-4B7F-9C1D-0A2E3F4B5C6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F8B0D2C-4E3A-4B7F-9C1D-0A2E3F4B5C6D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

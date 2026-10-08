@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- A standalone library: no dependency on Geek Guard, Telegram or ASP.NET Core, so any .NET app can use it. -->
+  <PropertyGroup>
+    <RootNamespace>CoolGeek.PersianText</RootNamespace>
+    <Product>CoolGeek.PersianText</Product>
+
+    <PackageId>CoolGeek.PersianText</PackageId>
+    <Description>Persian-aware text normalization, link detection and word filtering that sees through spam tricks: Arabic letter variants, invisible characters, tatweel, Persian digits, fancy Unicode and disguised links like "t . me".</Description>
+    <PackageTags>persian;farsi;normalization;spam;filter;telegram</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/Cool-Geek/geek-guard</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="CoolGeek.PersianText.Tests" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
