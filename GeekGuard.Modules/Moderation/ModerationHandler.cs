@@ -10,6 +10,7 @@ public sealed class ModerationHandler(
     BotActions actions,
     WarnStore warns,
     WarningService warnings,
+    PluginStateStore states,
     BotIdentity me) : IGroupMessageHandler
 {
     /// <summary>How long hints like "admins only" stay before deleting themselves.</summary>
@@ -63,11 +64,20 @@ public sealed class ModerationHandler(
             return HandlerResult.Stop;
         }
 
-        // The command did its job; removing it keeps the group readable.
-        await actions.DeleteAsync(chatId, message.MessageId, ct);
-        await ExecuteAsync(command, chatId, lang, target, ct);
+        var settings = await states.GetSettingsAsync<ModerationSettings>(chatId, ModerationPlugin.Id, ct);
+        var succeeded = await ExecuteAsync(command, chatId, lang, target, settings.CleanupDelay, ct);
+
+        // Clean up after the action: the admin's command and (via ExecuteAsync) the bot's reply always go;
+        // the member's message goes too when it was punished, since it is usually the reason for the action.
+        actions.ScheduleDelete(chatId, message.MessageId, settings.CleanupDelay);
+        if (succeeded && IsPunishment(command.Action) && settings.DeleteOffendingMessage && message.ReplyToMessage is { } offending)
+            actions.ScheduleDelete(chatId, offending.MessageId, settings.CleanupDelay);
+
         return HandlerResult.Stop;
     }
+
+    private static bool IsPunishment(ModerationAction action) =>
+        action is ModerationAction.Warn or ModerationAction.Mute or ModerationAction.Kick or ModerationAction.Ban;
 
     /// <summary>
     /// Anonymous admins are trusted: only admins can post as the group, and Telegram does not say which admin it was.
@@ -86,54 +96,62 @@ public sealed class ModerationHandler(
             ? user
             : null;
 
-    private async Task ExecuteAsync(ModerationCommand command, long chatId, string lang, User target, CancellationToken ct)
+    /// <summary>Performs the action and announces it. Returns whether Telegram carried it out.</summary>
+    private async Task<bool> ExecuteAsync(ModerationCommand command, long chatId, string lang, User target,
+        TimeSpan cleanup, CancellationToken ct)
     {
         var mention = Html.Mention(target);
         switch (command.Action)
         {
             case ModerationAction.Warn:
-                await warnings.WarnAsync(chatId, lang, target, command.Reason, automatic: false, ct);
-                return;
+                return await warnings.WarnAsync(chatId, lang, target, command.Reason, ct);
 
             case ModerationAction.Unwarn:
                 var had = await warns.ResetAsync(chatId, target.Id, ct);
-                await actions.SendAsync(chatId, (had > 0 ? ModerationTexts.Unwarned : ModerationTexts.NoWarnings).Format(lang, mention), ct: ct);
-                return;
+                await actions.SendTemporaryAsync(chatId,
+                    (had > 0 ? ModerationTexts.Unwarned : ModerationTexts.NoWarnings).Format(lang, mention), cleanup, ct: ct);
+                return true;
 
             case ModerationAction.Mute:
-                await ReportAsync(chatId, lang, await actions.MuteAsync(chatId, target.Id, command.Duration, ct),
+                return await ReportAsync(chatId, lang, await actions.MuteAsync(chatId, target.Id, command.Duration, ct),
                     command.Duration is { } md
                         ? ModerationTexts.MutedFor.Format(lang, mention, Duration.Format(md, lang))
-                        : ModerationTexts.Muted.Format(lang, mention), ct);
-                return;
+                        : ModerationTexts.Muted.Format(lang, mention), cleanup, ct);
 
             case ModerationAction.Unmute:
-                await ReportAsync(chatId, lang, await actions.UnmuteAsync(chatId, target.Id, ct),
-                    ModerationTexts.Unmuted.Format(lang, mention), ct);
-                return;
+                return await ReportAsync(chatId, lang, await actions.UnmuteAsync(chatId, target.Id, ct),
+                    ModerationTexts.Unmuted.Format(lang, mention), cleanup, ct);
 
             case ModerationAction.Kick:
-                await ReportAsync(chatId, lang, await actions.KickAsync(chatId, target.Id, ct),
-                    ModerationTexts.Kicked.Format(lang, mention), ct);
-                return;
+                return await ReportAsync(chatId, lang, await actions.KickAsync(chatId, target.Id, ct),
+                    ModerationTexts.Kicked.Format(lang, mention), cleanup, ct);
 
             case ModerationAction.Ban:
-                await ReportAsync(chatId, lang, await actions.BanAsync(chatId, target.Id, command.Duration, ct),
+                return await ReportAsync(chatId, lang, await actions.BanAsync(chatId, target.Id, command.Duration, ct),
                     command.Duration is { } bd
                         ? ModerationTexts.BannedFor.Format(lang, mention, Duration.Format(bd, lang))
-                        : ModerationTexts.Banned.Format(lang, mention), ct);
-                return;
+                        : ModerationTexts.Banned.Format(lang, mention), cleanup, ct);
 
             case ModerationAction.Unban:
-                await ReportAsync(chatId, lang, await actions.UnbanAsync(chatId, target.Id, ct),
-                    ModerationTexts.Unbanned.Format(lang, mention), ct);
-                return;
+                return await ReportAsync(chatId, lang, await actions.UnbanAsync(chatId, target.Id, ct),
+                    ModerationTexts.Unbanned.Format(lang, mention), cleanup, ct);
+
+            default:
+                return false;
         }
     }
 
-    /// <summary>Announces the action, or explains why Telegram refused it (that hint stays a minute, then goes).</summary>
-    private Task ReportAsync(long chatId, string lang, ActionResult result, string successText, CancellationToken ct) =>
-        result.Succeeded
-            ? actions.SendAsync(chatId, successText, ct: ct)
-            : actions.SendTemporaryAsync(chatId, ModerationTexts.ForProblem(result, lang), TimeSpan.FromMinutes(1), ct: ct);
+    /// <summary>
+    /// Announces the action (the announcement goes after the cleanup delay), or explains why Telegram
+    /// refused it (that hint stays a minute so the admin has time to read it).
+    /// </summary>
+    private async Task<bool> ReportAsync(long chatId, string lang, ActionResult result, string successText,
+        TimeSpan cleanup, CancellationToken ct)
+    {
+        if (result.Succeeded)
+            await actions.SendTemporaryAsync(chatId, successText, cleanup, ct: ct);
+        else
+            await actions.SendTemporaryAsync(chatId, ModerationTexts.ForProblem(result, lang), TimeSpan.FromMinutes(1), ct: ct);
+        return result.Succeeded;
+    }
 }

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace GeekGuard.Modules.Moderation;
 
 /// <summary>
@@ -38,4 +40,17 @@ public sealed class ModerationSettings
 
     /// <summary>How long the mute at the limit lasts.</summary>
     public int MuteHoursAtLimit { get; set; } = 24;
+
+    /// <summary>
+    /// After an admin action, the admin's command and the bot's confirmation are deleted after this many seconds,
+    /// so moderation does not clutter the chat.
+    /// </summary>
+    public int CleanupDelaySeconds { get; set; } = 60;
+
+    /// <summary>Also delete the member's message the admin replied to, when the action is a punishment.</summary>
+    public bool DeleteOffendingMessage { get; set; } = true;
+
+    /// <summary><see cref="CleanupDelaySeconds"/> kept between 5 seconds and 1 day.</summary>
+    [JsonIgnore]
+    public TimeSpan CleanupDelay => TimeSpan.FromSeconds(Math.Clamp(CleanupDelaySeconds, 5, 86_400));
 }

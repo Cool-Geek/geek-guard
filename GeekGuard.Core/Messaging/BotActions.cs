@@ -36,14 +36,19 @@ public sealed class BotActions(ITelegramBotClient bot, ILogger<BotActions> log)
         CancellationToken ct = default)
     {
         var message = await SendAsync(chatId, html, replyTo, ct: ct);
-        if (message is null) return;
+        if (message is not null) ScheduleDelete(chatId, message.MessageId, lifetime);
+    }
 
+    /// <summary>
+    /// Deletes a message after <paramref name="delay"/>, without waiting for it.
+    /// The schedule lives in memory: if the bot restarts in between, the message simply stays.
+    /// </summary>
+    public void ScheduleDelete(long chatId, int messageId, TimeSpan delay) =>
         _ = Task.Run(async () =>
         {
-            await Task.Delay(lifetime);
-            await DeleteAsync(chatId, message.MessageId, CancellationToken.None);
+            await Task.Delay(delay);
+            await DeleteAsync(chatId, messageId, CancellationToken.None);
         });
-    }
 
     public async Task<bool> DeleteAsync(long chatId, int messageId, CancellationToken ct = default)
     {
