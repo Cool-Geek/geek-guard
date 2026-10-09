@@ -1,5 +1,6 @@
 using GeekGuard.Core.Callbacks;
 using GeekGuard.Core.Data.Migrations;
+using GeekGuard.Core.Private;
 using GeekGuard.Core.Pipeline;
 
 namespace GeekGuard.Core.Plugins;
@@ -20,6 +21,14 @@ public static class PluginServiceCollectionExtensions
         where THandler : class, ICallbackHandler
     {
         services.AddSingleton<ICallbackHandler, THandler>();
+        return services;
+    }
+
+    /// <summary>Adds a handler for t.me/bot?start=… links; see <see cref="IStartLinkHandler"/>.</summary>
+    public static IServiceCollection AddStartLinkHandler<THandler>(this IServiceCollection services)
+        where THandler : class, IStartLinkHandler
+    {
+        services.AddSingleton<IStartLinkHandler, THandler>();
         return services;
     }
 

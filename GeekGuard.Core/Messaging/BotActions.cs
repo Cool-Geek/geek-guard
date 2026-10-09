@@ -31,6 +31,20 @@ public sealed class BotActions(ITelegramBotClient bot, ILogger<BotActions> log)
         }
     }
 
+    /// <summary>Number of members in a chat, or null if Telegram would not say.</summary>
+    public async Task<int?> GetMemberCountAsync(long chatId, CancellationToken ct = default)
+    {
+        try
+        {
+            return await bot.GetChatMemberCount(chatId, ct);
+        }
+        catch (ApiRequestException ex)
+        {
+            log.LogDebug("getChatMemberCount in {Chat} refused: {Message}", chatId, ex.Message);
+            return null;
+        }
+    }
+
     /// <summary>Answers a button press with a short toast, or a pop-up the user must close when <paramref name="alert"/>.</summary>
     public async Task AnswerButtonAsync(string queryId, string? text = null, bool alert = false, CancellationToken ct = default)
     {

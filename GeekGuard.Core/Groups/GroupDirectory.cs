@@ -42,6 +42,17 @@ public sealed class GroupDirectory(NpgsqlDataSource db)
         return group;
     }
 
+    /// <summary>A group by id, from the cache when possible. Null if the bot has never been in it.</summary>
+    public async Task<GroupInfo?> GetAsync(long chatId, CancellationToken ct = default)
+    {
+        if (_cache.TryGetValue(chatId, out var cached)) return cached;
+
+        await using var connection = await db.OpenConnectionAsync(ct);
+        return await connection.QuerySingleOrDefaultAsync<GroupInfo>(new CommandDefinition(
+            "SELECT chat_id AS ChatId, title AS Title, active AS Active, lang AS Lang FROM groups WHERE chat_id = @chatId",
+            new { chatId }, cancellationToken: ct));
+    }
+
     /// <summary>Changes the language of the bot's messages in a group.</summary>
     public async Task SetLangAsync(long chatId, string lang, CancellationToken ct = default)
     {

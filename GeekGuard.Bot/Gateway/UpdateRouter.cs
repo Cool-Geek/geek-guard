@@ -1,5 +1,6 @@
 using GeekGuard.Core.Callbacks;
 using GeekGuard.Core.Groups;
+using GeekGuard.Core.Private;
 using GeekGuard.Core.Messaging;
 using GeekGuard.Core.Users;
 using Telegram.Bot;
@@ -17,8 +18,12 @@ public sealed class UpdateRouter(
     GroupMessagePipeline groupPipeline,
     BotActions actions,
     IEnumerable<ICallbackHandler> callbackHandlers,
+    IEnumerable<IStartLinkHandler> startLinkHandlers,
     ILogger<UpdateRouter> log)
 {
+    private readonly Dictionary<string, IStartLinkHandler> _startLinks =
+        startLinkHandlers.ToDictionary(h => h.Prefix, StringComparer.Ordinal);
+
     private readonly Dictionary<string, ICallbackHandler> _callbacks =
         callbackHandlers.ToDictionary(h => h.Prefix, StringComparer.Ordinal);
 
@@ -40,6 +45,16 @@ public sealed class UpdateRouter(
             return;
 
         await users.UpsertAsync(from.Id, from.FirstName, from.Username, from.LanguageCode, ct);
+
+        // "/start rules_-100123": a link from a group button, handled by the plugin that made it.
+        var payload = text.Length > 7 ? text[7..].Trim() : "";
+        var underscore = payload.IndexOf('_');
+        if (underscore > 0 && _startLinks.TryGetValue(payload[..underscore], out var linkHandler))
+        {
+            await linkHandler.HandleAsync(message, payload[(underscore + 1)..], ct);
+            return;
+        }
+
         var total = await users.CountAsync(ct);
         log.LogInformation("/start from {UserId}; {Total} user(s) in the database", from.Id, total);
 
