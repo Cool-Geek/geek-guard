@@ -20,6 +20,7 @@ public sealed class UpdateRouter(
     {
         { Message: { Chat.Type: ChatType.Private } message } => HandlePrivateMessageAsync(message, ct),
         { Message: { Chat.Type: ChatType.Group or ChatType.Supergroup } message } => groupPipeline.RunAsync(message, ct),
+        { EditedMessage: { Chat.Type: ChatType.Group or ChatType.Supergroup } edited } => groupPipeline.RunAsync(edited, ct, isEdit: true),
         { MyChatMember: { } change } => HandleMyMembershipAsync(change, ct),
         { ChatMember: { } change } => HandleMemberChangedAsync(change),
         _ => Task.CompletedTask,

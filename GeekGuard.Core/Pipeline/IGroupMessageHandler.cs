@@ -31,6 +31,12 @@ public sealed class GroupMessageContext
     /// </summary>
     public required bool SenderIsAdmin { get; init; }
 
+    /// <summary>
+    /// True when this is an edit of an earlier message. Edits only reach content filters
+    /// (see <see cref="HandlerOrder.SeesEdits"/>): a message posted clean and edited to add a link is still caught.
+    /// </summary>
+    public bool IsEdit { get; init; }
+
     /// <summary>True when an admin posted anonymously, i.e. as the group itself.</summary>
     public bool IsAnonymousAdmin => Message.SenderChat?.Id == ChatId;
 
@@ -63,6 +69,7 @@ public interface IGroupMessageHandler
 /// <summary>
 /// Pipeline positions. Gaps leave room for plugins to slot in between.
 /// Commands go first so an admin's /unmute is never swallowed by a filter.
+/// Edited messages only go through the content filter range; see <see cref="SeesEdits"/>.
 /// </summary>
 public static class HandlerOrder
 {
@@ -71,4 +78,10 @@ public static class HandlerOrder
     public const int Flood = 300;
     public const int ContentFilters = 400;
     public const int Late = 900;
+
+    /// <summary>
+    /// Whether a handler at this position sees edited messages. Only content filters do: editing a message is not
+    /// a new command, not a join, and not another message for anti-flood or statistics to count.
+    /// </summary>
+    public static bool SeesEdits(int order) => order is >= ContentFilters and < Late;
 }

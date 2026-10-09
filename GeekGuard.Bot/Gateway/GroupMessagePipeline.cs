@@ -36,7 +36,8 @@ public sealed class GroupMessagePipeline
         _log = log;
     }
 
-    public async Task RunAsync(Message message, CancellationToken ct)
+    /// <param name="isEdit">The message was edited: only content filters look at it again.</param>
+    public async Task RunAsync(Message message, CancellationToken ct, bool isEdit = false)
     {
         var chat = message.Chat;
         var group = await _groups.GetOrAddAsync(chat.Id, chat.Title ?? "", message.From?.Id,
@@ -48,12 +49,15 @@ public sealed class GroupMessagePipeline
         {
             Message = message,
             Group = group,
-            Command = CommandParser.Parse(message.Text, _me.Username),
+            // An edit never runs a command: fixing a typo in an old "/ban" must not ban anyone again.
+            Command = isEdit ? null : CommandParser.Parse(message.Text, _me.Username),
+            IsEdit = isEdit,
             SenderIsAdmin = await IsFromAdminAsync(message, ct),
         };
 
         foreach (var (handler, plugin) in _handlers)
         {
+            if (isEdit && !HandlerOrder.SeesEdits(handler.Order)) continue;
             if (!await _states.IsActiveAsync(chat.Id, plugin, ct)) continue;
 
             if (await handler.HandleAsync(context, ct) == HandlerResult.Stop)
