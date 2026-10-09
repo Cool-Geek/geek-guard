@@ -1,3 +1,4 @@
+using GeekGuard.Core.Callbacks;
 using GeekGuard.Core.Data.Migrations;
 using GeekGuard.Core.Pipeline;
 
@@ -11,6 +12,14 @@ public static class PluginServiceCollectionExtensions
         where THandler : class, IGroupMessageHandler
     {
         services.AddSingleton<IGroupMessageHandler, THandler>();
+        return services;
+    }
+
+    /// <summary>Adds a handler for inline button presses; see <see cref="ICallbackHandler"/>.</summary>
+    public static IServiceCollection AddCallbackHandler<THandler>(this IServiceCollection services)
+        where THandler : class, ICallbackHandler
+    {
+        services.AddSingleton<ICallbackHandler, THandler>();
         return services;
     }
 

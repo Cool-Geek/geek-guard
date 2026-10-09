@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using CoolGeek.PersianText;
+using GeekGuard.Core.Callbacks;
 using GeekGuard.Core.Groups;
 using GeekGuard.Core.Messaging;
 using Telegram.Bot.Types;
@@ -20,7 +21,10 @@ public sealed class ReportsPlugin : IGeekGuardPlugin
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<ReportLog>();
+        services.AddSingleton<ReportStore>();
         services.AddGroupMessageHandler<ReportHandler>();
+        services.AddCallbackHandler<ReportButtonHandler>();
+        services.AddPluginMigrations(Id, GetType());
     }
 }
 
@@ -54,6 +58,7 @@ public sealed class ReportHandler(
     BotActions actions,
     NoticeThrottle throttle,
     ReportLog reports,
+    ReportStore store,
     BotIdentity me) : IGroupMessageHandler
 {
     private static readonly string[] Keywords = new[] { "گزارش", "ریپورت", "report" }.Select(PersianNormalizer.Normalize).ToArray();
@@ -127,14 +132,23 @@ public sealed class ReportHandler(
     private async Task<int> NotifyAdminsAsync(GroupMessageContext context, User reporter, Message reported, string? note,
         CancellationToken ct)
     {
+        var lang = context.Group.Lang;
+        var author = reported is { SenderChat: null, From: { } user } ? user.Id : (long?)null;
+        var reportId = await store.CreateAsync(context.ChatId, reported.MessageId, author, reporter.Id, lang, ct);
+
         var text = BuildReport(context, reporter, reported, note);
+        var keyboard = ReportButtons.Open(reportId, lang, hasMember: author is not null);
         var delivered = 0;
         foreach (var adminId in await admins.GetAdminIdsAsync(context.ChatId, ct))
         {
             if (adminId == me.Id || adminId == GroupAdmins.AnonymousAdminId) continue;
 
             // Telegram refuses private messages to admins who never started the bot; they are simply skipped.
-            if (await actions.SendAsync(adminId, text, ct: ct) is not null) delivered++;
+            if (await actions.SendAsync(adminId, text, keyboard: keyboard, ct: ct) is { } sent)
+            {
+                await store.AddDeliveryAsync(reportId, adminId, sent.MessageId, ct);
+                delivered++;
+            }
         }
         return delivered;
     }

@@ -31,6 +31,35 @@ public sealed class BotActions(ITelegramBotClient bot, ILogger<BotActions> log)
         }
     }
 
+    /// <summary>Answers a button press with a short toast, or a pop-up the user must close when <paramref name="alert"/>.</summary>
+    public async Task AnswerButtonAsync(string queryId, string? text = null, bool alert = false, CancellationToken ct = default)
+    {
+        try
+        {
+            await bot.AnswerCallbackQuery(queryId, text, alert, cancellationToken: ct);
+        }
+        catch (ApiRequestException ex)
+        {
+            // Presses older than a few minutes can no longer be answered; nothing to do about it.
+            log.LogDebug("answerCallbackQuery refused: {Message}", ex.Message);
+        }
+    }
+
+    /// <summary>Replaces the buttons under a message. Returns false if Telegram refused (e.g. message deleted).</summary>
+    public async Task<bool> EditButtonsAsync(long chatId, int messageId, InlineKeyboardMarkup? keyboard, CancellationToken ct = default)
+    {
+        try
+        {
+            await bot.EditMessageReplyMarkup(chatId, messageId, keyboard, cancellationToken: ct);
+            return true;
+        }
+        catch (ApiRequestException ex)
+        {
+            log.LogDebug("editMessageReplyMarkup in {Chat} refused: {Message}", chatId, ex.Message);
+            return false;
+        }
+    }
+
     /// <summary>Sends a notice that deletes itself after <paramref name="lifetime"/>, keeping the group tidy.</summary>
     public async Task SendTemporaryAsync(long chatId, string html, TimeSpan lifetime, int? replyTo = null,
         CancellationToken ct = default)
