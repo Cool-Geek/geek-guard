@@ -1,3 +1,4 @@
+using CoolGeek.PersianText;
 using GeekGuard.Core.Groups;
 using GeekGuard.Core.Messaging;
 using Telegram.Bot.Types;
@@ -11,6 +12,7 @@ public sealed class ModerationHandler(
     WarnStore warns,
     WarningService warnings,
     PluginStateStore states,
+    MemberDirectory members,
     BotIdentity me) : IGroupMessageHandler
 {
     /// <summary>How long hints like "admins only" stay before deleting themselves.</summary>
@@ -23,7 +25,13 @@ public sealed class ModerationHandler(
     public async Task<HandlerResult> HandleAsync(GroupMessageContext context, CancellationToken ct)
     {
         var message = context.Message;
-        var command = ModerationCommandParser.Parse(context.Command, context.NormalizedText);
+
+        // Without a reply, the member may be named in the text: «بن @ali», «رفع بن 123456789», «سکوت @ali 2 ساعت».
+        // The name is taken out and the rest must still be a plain command, so chat that mentions someone is left alone.
+        var named = message.ReplyToMessage is null ? MemberReferenceParser.Extract(message) : null;
+        var command = named is { } n
+            ? ModerationCommandParser.Parse(CommandParser.Parse(n.RemainingText, me.Username), NormalizedText.From(n.RemainingText))
+            : ModerationCommandParser.Parse(context.Command, context.NormalizedText);
         if (command is null) return HandlerResult.Continue;
 
         // Members get no reaction at all, not even "admins only": every bot reply to a member is a way
@@ -50,7 +58,31 @@ public sealed class ModerationHandler(
             return HandlerResult.Stop;
         }
 
-        var target = GetTarget(message);
+        User? target;
+        switch (named?.Reference)
+        {
+            case MemberReference.ByMention mention:
+                target = mention.User;
+                break;
+            case MemberReference.ById byId:
+                // Known members keep their name in the reply; anyone else is still reachable by id (e.g. to unban).
+                target = (await members.FindAsync(chatId, byId.UserId, ct))?.ToUser()
+                         ?? new User { Id = byId.UserId, FirstName = byId.UserId.ToString() };
+                break;
+            case MemberReference.ByUsername byName:
+                target = (await members.FindByUsernameAsync(chatId, byName.Username, ct))?.ToUser();
+                if (target is null)
+                {
+                    await actions.SendTemporaryAsync(chatId, ModerationTexts.UnknownUsername.Format(lang, Html.Escape(byName.Username)),
+                        HintLifetime, message.MessageId, ct);
+                    return HandlerResult.Stop;
+                }
+                break;
+            default:
+                target = GetTarget(message);
+                break;
+        }
+
         if (target is null)
         {
             await actions.SendTemporaryAsync(chatId, ModerationTexts.ReplyNeeded.Get(lang), HintLifetime, message.MessageId, ct);
@@ -100,6 +132,8 @@ public sealed class ModerationHandler(
         TimeSpan cleanup, CancellationToken ct)
     {
         var mention = Html.Mention(target);
+        // Penalties show the id too, so they can be undone later without a message to reply to.
+        var tagged = Html.MentionWithId(target);
         switch (command.Action)
         {
             case ModerationAction.Warn:
@@ -114,8 +148,8 @@ public sealed class ModerationHandler(
             case ModerationAction.Mute:
                 return await ReportAsync(chatId, lang, await actions.MuteAsync(chatId, target.Id, command.Duration, ct),
                     command.Duration is { } md
-                        ? ModerationTexts.MutedFor.Format(lang, mention, Duration.Format(md, lang))
-                        : ModerationTexts.Muted.Format(lang, mention), cleanup, ct);
+                        ? ModerationTexts.MutedFor.Format(lang, tagged, Duration.Format(md, lang))
+                        : ModerationTexts.Muted.Format(lang, tagged), cleanup, ct);
 
             case ModerationAction.Unmute:
                 return await ReportAsync(chatId, lang, await actions.UnmuteAsync(chatId, target.Id, ct),
@@ -123,13 +157,13 @@ public sealed class ModerationHandler(
 
             case ModerationAction.Kick:
                 return await ReportAsync(chatId, lang, await actions.KickAsync(chatId, target.Id, ct),
-                    ModerationTexts.Kicked.Format(lang, mention), cleanup, ct);
+                    ModerationTexts.Kicked.Format(lang, tagged), cleanup, ct);
 
             case ModerationAction.Ban:
                 return await ReportAsync(chatId, lang, await actions.BanAsync(chatId, target.Id, command.Duration, ct),
                     command.Duration is { } bd
-                        ? ModerationTexts.BannedFor.Format(lang, mention, Duration.Format(bd, lang))
-                        : ModerationTexts.Banned.Format(lang, mention), cleanup, ct);
+                        ? ModerationTexts.BannedFor.Format(lang, tagged, Duration.Format(bd, lang))
+                        : ModerationTexts.Banned.Format(lang, tagged), cleanup, ct);
 
             case ModerationAction.Unban:
                 return await ReportAsync(chatId, lang, await actions.UnbanAsync(chatId, target.Id, ct),

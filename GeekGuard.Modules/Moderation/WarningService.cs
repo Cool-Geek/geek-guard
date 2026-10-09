@@ -28,6 +28,7 @@ public sealed class WarningService(WarnStore warns, PluginStateStore states, Bot
         await warns.ResetAsync(chatId, member.Id, ct);
 
         var limit = settings.WarnLimit;
+        mention = Html.MentionWithId(member); // the penalty may need undoing later
         var muteFor = TimeSpan.FromHours(settings.MuteHoursAtLimit);
         var (result, text) = settings.ActionAtLimit switch
         {

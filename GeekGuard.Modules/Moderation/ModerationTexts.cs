@@ -10,8 +10,12 @@ internal static class ModerationTexts
         "⛔ Only admins who can restrict members may use this.");
 
     public static readonly Localized ReplyNeeded = new(
-        "↩️ روی پیام همان کاربر ریپلای کن و دستور را بفرست.",
-        "↩️ Reply to that member's message with the command.");
+        "↩️ روی پیام همان کاربر ریپلای کن، یا یوزرنیم یا آیدی عددی‌اش را بنویس؛ مثلاً «بن @ali» یا «رفع بن 123456789».",
+        "↩️ Reply to that member's message, or name them: /ban @ali or /unban 123456789.");
+
+    public static readonly Localized UnknownUsername = new(
+        "❓ @{0} را در این گروه ندیده‌ام. روی پیامش ریپلای کن یا آیدی عددی‌اش را بنویس.",
+        "❓ I haven't seen @{0} in this group. Reply to their message or use their numeric id.");
 
     public static readonly Localized CannotTargetAdmin = new(
         "⛔ این کار روی ادمین‌ها ممکن نیست.",

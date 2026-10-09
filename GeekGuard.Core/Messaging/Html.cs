@@ -20,5 +20,8 @@ public static class Html
     public static string Mention(User user) =>
         $"<a href=\"tg://user?id={user.Id}\">{Escape(Truncate(DisplayName(user), 40))}</a>";
 
+    /// <summary>A mention followed by the numeric id, so admins can undo an action later with «رفع بن 123456789».</summary>
+    public static string MentionWithId(User user) => $"{Mention(user)} (<code>{user.Id}</code>)";
+
     public static string Truncate(string text, int max) => text.Length <= max ? text : text[..(max - 1)] + "…";
 }
