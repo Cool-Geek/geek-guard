@@ -51,7 +51,7 @@ public sealed class UpdateRouter(
         if (isMember)
         {
             await groups.GetOrAddAsync(change.Chat.Id, change.Chat.Title ?? "", change.From.Id,
-                Languages.FromTelegram(change.From.LanguageCode), ct);
+                Languages.ForNewGroup(change.Chat.Title, change.From.LanguageCode), ct);
             await admins.RefreshAsync(change.Chat.Id, ct);
             log.LogInformation("Bot is in group {Chat} ({Title}) as {Status}",
                 change.Chat.Id, change.Chat.Title, change.NewChatMember.Status);

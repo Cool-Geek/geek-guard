@@ -38,7 +38,7 @@ public sealed class GroupMessagePipeline
     {
         var chat = message.Chat;
         var group = await _groups.GetOrAddAsync(chat.Id, chat.Title ?? "", message.From?.Id,
-            Languages.FromTelegram(message.From?.LanguageCode), ct);
+            Languages.ForNewGroup(chat.Title, message.From?.LanguageCode), ct);
 
         var context = new GroupMessageContext
         {

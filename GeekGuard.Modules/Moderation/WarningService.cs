@@ -31,7 +31,7 @@ public sealed class WarningService(WarnStore warns, PluginStateStore states, Bot
 
         var limit = settings.WarnLimit;
         var muteFor = TimeSpan.FromHours(settings.MuteHoursAtLimit);
-        var (succeeded, text) = settings.ActionAtLimit switch
+        var (result, text) = settings.ActionAtLimit switch
         {
             LimitAction.Ban => (await actions.BanAsync(chatId, member.Id, null, ct),
                 ModerationTexts.WarnLimitBanned.Format(lang, mention, limit)),
@@ -41,7 +41,7 @@ public sealed class WarningService(WarnStore warns, PluginStateStore states, Bot
                 ModerationTexts.WarnLimitMuted.Format(lang, mention, limit, Duration.Format(muteFor, lang))),
         };
 
-        await Notify(chatId, succeeded ? text : ModerationTexts.Failed.Get(lang), automatic: !succeeded, ct);
+        await Notify(chatId, result.Succeeded ? text : ModerationTexts.ForProblem(result, lang), automatic: !result.Succeeded, ct);
     }
 
     private Task Notify(long chatId, string html, bool automatic, CancellationToken ct) =>

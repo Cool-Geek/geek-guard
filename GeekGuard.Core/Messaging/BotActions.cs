@@ -8,7 +8,7 @@ namespace GeekGuard.Core.Messaging;
 
 /// <summary>
 /// The Bot API calls moderation needs, with the error handling they all share: a call that Telegram refuses
-/// (missing rights, message already gone, user left) returns false instead of throwing.
+/// (missing rights, basic group, user left…) returns the reason instead of throwing.
 /// </summary>
 public sealed class BotActions(ITelegramBotClient bot, ILogger<BotActions> log)
 {
@@ -60,47 +60,47 @@ public sealed class BotActions(ITelegramBotClient bot, ILogger<BotActions> log)
     }
 
     /// <summary>Mutes a member. A null <paramref name="duration"/> mutes until an admin unmutes.</summary>
-    public async Task<bool> MuteAsync(long chatId, long userId, TimeSpan? duration, CancellationToken ct = default)
+    public async Task<ActionResult> MuteAsync(long chatId, long userId, TimeSpan? duration, CancellationToken ct = default)
     {
         try
         {
             await bot.RestrictChatMember(chatId, userId, NoPermissions(), untilDate: Until(duration), cancellationToken: ct);
-            return true;
+            return ActionResult.Ok;
         }
         catch (ApiRequestException ex)
         {
-            log.LogDebug("restrictChatMember in {Chat} refused: {Message}", chatId, ex.Message);
-            return false;
+            log.LogWarning("restrictChatMember in {Chat} refused: {Message}", chatId, ex.Message);
+            return ActionResult.From(ex);
         }
     }
 
-    public async Task<bool> UnmuteAsync(long chatId, long userId, CancellationToken ct = default)
+    public async Task<ActionResult> UnmuteAsync(long chatId, long userId, CancellationToken ct = default)
     {
         try
         {
             // Telegram: passing every permission as true lifts the restriction; the group's defaults still apply.
             await bot.RestrictChatMember(chatId, userId, AllPermissions(), cancellationToken: ct);
-            return true;
+            return ActionResult.Ok;
         }
         catch (ApiRequestException ex)
         {
-            log.LogDebug("unmute in {Chat} refused: {Message}", chatId, ex.Message);
-            return false;
+            log.LogWarning("unmute in {Chat} refused: {Message}", chatId, ex.Message);
+            return ActionResult.From(ex);
         }
     }
 
     /// <summary>Bans a member. A null <paramref name="duration"/> bans until an admin unbans.</summary>
-    public async Task<bool> BanAsync(long chatId, long userId, TimeSpan? duration, CancellationToken ct = default)
+    public async Task<ActionResult> BanAsync(long chatId, long userId, TimeSpan? duration, CancellationToken ct = default)
     {
         try
         {
             await bot.BanChatMember(chatId, userId, untilDate: Until(duration), cancellationToken: ct);
-            return true;
+            return ActionResult.Ok;
         }
         catch (ApiRequestException ex)
         {
-            log.LogDebug("banChatMember in {Chat} refused: {Message}", chatId, ex.Message);
-            return false;
+            log.LogWarning("banChatMember in {Chat} refused: {Message}", chatId, ex.Message);
+            return ActionResult.From(ex);
         }
     }
 
@@ -108,33 +108,33 @@ public sealed class BotActions(ITelegramBotClient bot, ILogger<BotActions> log)
     /// Removes a member who may rejoin later. Telegram has no kick call: the usual way is a ban
     /// followed at once by an unban, which lifts the ban without bringing the member back.
     /// </summary>
-    public async Task<bool> KickAsync(long chatId, long userId, CancellationToken ct = default)
+    public async Task<ActionResult> KickAsync(long chatId, long userId, CancellationToken ct = default)
     {
         try
         {
             await bot.BanChatMember(chatId, userId, cancellationToken: ct);
             await bot.UnbanChatMember(chatId, userId, onlyIfBanned: true, cancellationToken: ct);
-            return true;
+            return ActionResult.Ok;
         }
         catch (ApiRequestException ex)
         {
-            log.LogDebug("kick in {Chat} refused: {Message}", chatId, ex.Message);
-            return false;
+            log.LogWarning("kick in {Chat} refused: {Message}", chatId, ex.Message);
+            return ActionResult.From(ex);
         }
     }
 
-    public async Task<bool> UnbanAsync(long chatId, long userId, CancellationToken ct = default)
+    public async Task<ActionResult> UnbanAsync(long chatId, long userId, CancellationToken ct = default)
     {
         try
         {
             // onlyIfBanned: without it, unbanning a current member would kick them out of the group.
             await bot.UnbanChatMember(chatId, userId, onlyIfBanned: true, cancellationToken: ct);
-            return true;
+            return ActionResult.Ok;
         }
         catch (ApiRequestException ex)
         {
-            log.LogDebug("unbanChatMember in {Chat} refused: {Message}", chatId, ex.Message);
-            return false;
+            log.LogWarning("unbanChatMember in {Chat} refused: {Message}", chatId, ex.Message);
+            return ActionResult.From(ex);
         }
     }
 

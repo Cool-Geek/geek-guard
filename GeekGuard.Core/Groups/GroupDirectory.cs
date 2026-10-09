@@ -42,6 +42,16 @@ public sealed class GroupDirectory(NpgsqlDataSource db)
         return group;
     }
 
+    /// <summary>Changes the language of the bot's messages in a group.</summary>
+    public async Task SetLangAsync(long chatId, string lang, CancellationToken ct = default)
+    {
+        await using var connection = await db.OpenConnectionAsync(ct);
+        await connection.ExecuteAsync(new CommandDefinition(
+            "UPDATE groups SET lang = @lang, updated_at = now() WHERE chat_id = @chatId",
+            new { chatId, lang }, cancellationToken: ct));
+        if (_cache.TryGetValue(chatId, out var group)) _cache[chatId] = group with { Lang = lang };
+    }
+
     /// <summary>Marks a group inactive after the bot was removed. Its settings are kept for a comeback.</summary>
     public async Task DeactivateAsync(long chatId, CancellationToken ct = default)
     {

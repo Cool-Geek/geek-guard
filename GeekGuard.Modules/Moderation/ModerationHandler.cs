@@ -124,8 +124,9 @@ public sealed class ModerationHandler(
         }
     }
 
-    private Task ReportAsync(long chatId, string lang, bool succeeded, string successText, CancellationToken ct) =>
-        succeeded
+    /// <summary>Announces the action, or explains why Telegram refused it (that hint stays a minute, then goes).</summary>
+    private Task ReportAsync(long chatId, string lang, ActionResult result, string successText, CancellationToken ct) =>
+        result.Succeeded
             ? actions.SendAsync(chatId, successText, ct: ct)
-            : actions.SendTemporaryAsync(chatId, ModerationTexts.Failed.Get(lang), HintLifetime, ct: ct);
+            : actions.SendTemporaryAsync(chatId, ModerationTexts.ForProblem(result, lang), TimeSpan.FromMinutes(1), ct: ct);
 }
