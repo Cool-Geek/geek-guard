@@ -27,10 +27,9 @@ public sealed class ModerationHandler(
         if (command is null) return HandlerResult.Continue;
 
         // Members get no reaction at all, not even "admins only": every bot reply to a member is a way
-        // to make the bot flood the group. A keyword from a member is just chat, so it continues down the
-        // pipeline; a slash command from a member is swallowed silently.
-        if (!context.SenderIsAdmin)
-            return command.IsSlashCommand ? HandlerResult.Stop : HandlerResult.Continue;
+        // to make the bot flood the group. Their message still carries on to the filters, so "/ban t.me/spam"
+        // cannot be used to slip a link past anti-link.
+        if (!context.SenderIsAdmin) return HandlerResult.Continue;
 
         // From here on the sender is an admin, so hints are safe: an admin writing "سکوت ۵ دقیقه" without
         // a reply clearly meant a command and is told how, instead of nothing happening.

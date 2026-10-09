@@ -37,8 +37,8 @@ public sealed class PingHandler(
     {
         if (context.Command?.Name != "ping") return HandlerResult.Continue;
 
-        // Members get silence: /ping must not become a way to flood the group with bot replies.
-        if (!context.SenderIsAdmin) return HandlerResult.Stop;
+        // Members get silence (no flooding with bot replies), and their message carries on to the filters.
+        if (!context.SenderIsAdmin) return HandlerResult.Continue;
 
         var lang = context.Group.Lang;
         var version = typeof(IGeekGuardPlugin).Assembly.GetName().Version?.ToString(3) ?? "?";

@@ -17,6 +17,7 @@ public sealed class ModerationPlugin : IGeekGuardPlugin
         services.AddSingleton<WarnStore>();
         services.AddSingleton<WarningService>();
         services.AddGroupMessageHandler<ModerationHandler>();
+        services.AddGroupMessageHandler<ModerationSettingsHandler>();
         services.AddPluginMigrations(Id, GetType());
     }
 }
@@ -45,12 +46,16 @@ public sealed class ModerationSettings
     /// After an admin action, the admin's command and the bot's confirmation are deleted after this many seconds,
     /// so moderation does not clutter the chat.
     /// </summary>
-    public int CleanupDelaySeconds { get; set; } = 60;
+    public int CleanupDelaySeconds { get; set; } = DefaultCleanupSeconds;
 
     /// <summary>Also delete the member's message the admin replied to, when the action is a punishment.</summary>
     public bool DeleteOffendingMessage { get; set; } = true;
 
+    public const int DefaultCleanupSeconds = 30;
+    public const int MinCleanupSeconds = 5;
+    public const int MaxCleanupSeconds = 86_400;
+
     /// <summary><see cref="CleanupDelaySeconds"/> kept between 5 seconds and 1 day.</summary>
     [JsonIgnore]
-    public TimeSpan CleanupDelay => TimeSpan.FromSeconds(Math.Clamp(CleanupDelaySeconds, 5, 86_400));
+    public TimeSpan CleanupDelay => TimeSpan.FromSeconds(Math.Clamp(CleanupDelaySeconds, MinCleanupSeconds, MaxCleanupSeconds));
 }

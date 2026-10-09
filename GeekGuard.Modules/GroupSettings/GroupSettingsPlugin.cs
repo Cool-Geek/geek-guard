@@ -31,8 +31,9 @@ public sealed class LanguageHandler(GroupDirectory groups, BotActions actions) :
         var requested = ReadRequest(context);
         if (requested is null) return HandlerResult.Continue;
 
-        // Only admins change group settings; members asking get no answer, so this can't be used to spam.
-        if (!context.SenderIsAdmin) return HandlerResult.Stop;
+        // Only admins change group settings. Members get no answer (no spam), and their message carries on
+        // to the filters.
+        if (!context.SenderIsAdmin) return HandlerResult.Continue;
 
         if (requested == "")
         {
