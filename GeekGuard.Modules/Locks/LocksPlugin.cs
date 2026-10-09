@@ -130,9 +130,12 @@ public sealed class LockCommandsHandler(PluginStateStore states, BotActions acti
 {
     private static readonly string LockWord = PersianNormalizer.Normalize("قفل");
     private static readonly string[] UnlockWords = new[] { "باز کردن", "بازکردن", "آزادسازی" }.Select(PersianNormalizer.Normalize).ToArray();
-    private static readonly string[] ListWords = new[] { "قفل‌ها", "قفلها", "قفل ها" }.Select(PersianNormalizer.Normalize).ToArray();
+    private static readonly string[] ListWords = new[] { "قفل", "قفل‌ها", "قفلها", "قفل ها", "وضعیت قفل‌ها", "وضعیت قفل", "لیست قفل‌ها", "لیست قفل" }.Select(PersianNormalizer.Normalize).ToArray();
 
-    private static readonly Localized ListTitle = new("🔒 قفل‌های این گروه:", "🔒 Locks in this group:");
+    private static readonly Localized ListTitle = new("وضعیت قفل‌های این گروه", "Locks in this group");
+    private static readonly Localized ClosedLine = new("🔒 بسته: {0}", "🔒 Locked: {0}");
+    private static readonly Localized OpenLine = new("🔓 آزاد: {0}", "🔓 Allowed: {0}");
+    private static readonly Localized Nothing = new("هیچ", "none");
     private static readonly Localized ListHelp = new(
         "قفل کردن: «قفل عکس» یا /lock photo\nباز کردن: «باز کردن عکس» یا /unlock photo\nهمه با هم: «قفل همه» / «باز کردن همه»",
         "Lock: /lock photo — Unlock: /unlock photo — Everything: /lock all, /unlock all");
@@ -167,9 +170,8 @@ public sealed class LockCommandsHandler(PluginStateStore states, BotActions acti
 
         if (verb == Verb.List || names.Count == 0)
         {
-            var lines = LockTypes.All.Select(t => $"{(settings.IsLocked(t) ? "🔒" : "🔓")} {LockTypes.Name(t, lang)} — {LockTypes.Keyword(t, lang)}");
             await actions.SendTemporaryAsync(chatId,
-                $"<b>{ListTitle.Get(lang)}</b>\n{string.Join('\n', lines)}\n\n{ListHelp.Get(lang)}", TimeSpan.FromMinutes(1), ct: ct);
+                $"<b>{ListTitle.Get(lang)}</b>\n{Status(settings, lang)}\n\n{ListHelp.Get(lang)}", TimeSpan.FromMinutes(1), ct: ct);
             return HandlerResult.Stop;
         }
 
@@ -185,8 +187,8 @@ public sealed class LockCommandsHandler(PluginStateStore states, BotActions acti
         var updated = verb == Verb.Lock
             ? settings.Locked.Union(changed).ToList()
             : settings.Locked.Except(changed).ToList();
-        await states.SaveSettingsAsync(chatId, LocksPlugin.Id,
-            new LocksSettings { Locked = updated, WarnOnViolation = settings.WarnOnViolation }, ct);
+        var saved = new LocksSettings { Locked = updated, WarnOnViolation = settings.WarnOnViolation };
+        await states.SaveSettingsAsync(chatId, LocksPlugin.Id, saved, ct);
 
         string reply;
         if (names.Any(LockTypes.IsAll))
@@ -196,8 +198,22 @@ public sealed class LockCommandsHandler(PluginStateStore states, BotActions acti
             var list = string.Join("، ", changed.Select(t => LockTypes.Name(t, lang)));
             reply = (verb == Verb.Lock ? Locked : Unlocked).Format(lang, Html.Escape(list));
         }
-        await actions.SendTemporaryAsync(chatId, reply, Lifetime, ct: ct);
+        // Every change also shows the whole picture, so the admin always knows what is open and what is closed.
+        await actions.SendTemporaryAsync(chatId, $"{reply}\n\n{Status(saved, lang)}", Lifetime, ct: ct);
         return HandlerResult.Stop;
+    }
+
+    /// <summary>Two lines: what is locked and what is allowed in this group.</summary>
+    private static string Status(LocksSettings settings, string lang)
+    {
+        string Join(IEnumerable<LockType> types)
+        {
+            var names = types.Select(t => LockTypes.Name(t, lang)).ToList();
+            return names.Count == 0 ? Nothing.Get(lang) : Html.Escape(string.Join("، ", names));
+        }
+
+        return $"{ClosedLine.Format(lang, Join(LockTypes.All.Where(settings.IsLocked)))}\n" +
+               OpenLine.Format(lang, Join(LockTypes.All.Where(t => !settings.IsLocked(t))));
     }
 
     /// <summary>What the admin asked for, or null if the message is not a lock command.</summary>
