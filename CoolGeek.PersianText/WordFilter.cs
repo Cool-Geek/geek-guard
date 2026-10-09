@@ -5,18 +5,28 @@ namespace CoolGeek.PersianText;
 /// and "casssino" all match "تبلیغ" / "casino". Build one filter per word list and reuse it.
 /// </summary>
 /// <remarks>
-/// Words of <see cref="MinSubstringLength"/> letters or more match anywhere, even inside longer words or split
-/// by dots and spaces. Shorter words match only as whole words, so a short banned word does not hit every
-/// innocent word that happens to contain it.
+/// How far a word reaches depends on its length, so short banned words do not hit innocent words that contain them:
+/// <list type="bullet">
+/// <item>shorter than <see cref="MinPrefixLength"/> letters: whole words only («کس» does not hit «کسی»);</item>
+/// <item>from <see cref="MinPrefixLength"/> letters: also at the start of a word, so suffixes are caught
+/// («تبلیغ» hits «تبلیغات») but a word that merely contains it is not («کونی» does not hit «مسکونی»);</item>
+/// <item>from <see cref="MinSubstringLength"/> letters: anywhere, even split across spaces and dots.</item>
+/// </list>
+/// Letters spelled out one by one ("ک و ن ی") and repeated letters ("کووووونننیی") are caught at every length.
 /// </remarks>
 public sealed class WordFilter
 {
-    /// <summary>Words at least this long are matched inside other text; shorter ones only as whole words.</summary>
-    public const int MinSubstringLength = 4;
+    /// <summary>Words at least this long also match at the start of a longer word.</summary>
+    public const int MinPrefixLength = 4;
+
+    /// <summary>Words at least this long match anywhere in the text.</summary>
+    public const int MinSubstringLength = 6;
 
     private readonly Entry[] _entries;
 
-    private sealed record Entry(string Original, string Collapsed, string Squashed, string PaddedWord, bool MatchInside);
+    private enum Reach { WholeWord, WordStart, Anywhere }
+
+    private sealed record Entry(string Original, string Collapsed, string Squashed, string Padded, Reach Reach);
 
     public WordFilter(IEnumerable<string> words)
     {
@@ -27,8 +37,11 @@ public sealed class WordFilter
                 w.Original,
                 w.Normalized.Collapsed,
                 w.Normalized.Squashed,
-                " " + NormalizedText.PunctuationToSpace(w.Normalized.Collapsed) + " ",
-                w.Normalized.Squashed.Length >= MinSubstringLength))
+                NormalizedText.WordsOnly(w.Normalized.Collapsed),
+                w.Normalized.Squashed.Length >= MinSubstringLength ? Reach.Anywhere
+                    : w.Normalized.Squashed.Length >= MinPrefixLength ? Reach.WordStart
+                    : Reach.WholeWord))
+            .Where(e => e.Squashed.Length > 0)
             .ToArray();
     }
 
@@ -42,15 +55,22 @@ public sealed class WordFilter
 
         foreach (var entry in _entries)
         {
-            var hit = entry.MatchInside
-                ? text.Collapsed.Contains(entry.Collapsed, StringComparison.Ordinal)
-                  || text.Squashed.Contains(entry.Squashed, StringComparison.Ordinal)
-                : text.PaddedWords.Contains(entry.PaddedWord, StringComparison.Ordinal);
+            var hit = entry.Reach switch
+            {
+                Reach.Anywhere => text.Collapsed.Contains(entry.Collapsed, StringComparison.Ordinal)
+                                  || text.Squashed.Contains(entry.Squashed, StringComparison.Ordinal),
+                Reach.WordStart => HasWord(text, " " + entry.Padded),
+                _ => HasWord(text, " " + entry.Padded + " "),
+            };
 
             if (hit) return entry.Original;
         }
         return null;
     }
+
+    private static bool HasWord(NormalizedText text, string needle) =>
+        text.PaddedWords.Contains(needle, StringComparison.Ordinal)
+        || text.JoinedWords.Contains(needle, StringComparison.Ordinal);
 
     /// <inheritdoc cref="FindMatch(NormalizedText)"/>
     public string? FindMatch(string? raw) => FindMatch(NormalizedText.From(raw));
