@@ -22,17 +22,24 @@ public sealed class ModerationHandler(
     public async Task<HandlerResult> HandleAsync(GroupMessageContext context, CancellationToken ct)
     {
         var message = context.Message;
-        var command = ModerationCommandParser.Parse(context.Command, context.NormalizedText, message.ReplyToMessage is not null);
+        var command = ModerationCommandParser.Parse(context.Command, context.NormalizedText);
         if (command is null) return HandlerResult.Continue;
 
-        // A member saying "بن" in a reply is just talking; only slash commands get an answer.
-        if (!command.IsSlashCommand && !context.SenderIsAdmin) return HandlerResult.Continue;
+        // Members get no reaction at all, not even "admins only": every bot reply to a member is a way
+        // to make the bot flood the group. A keyword from a member is just chat, so it continues down the
+        // pipeline; a slash command from a member is swallowed silently.
+        if (!context.SenderIsAdmin)
+            return command.IsSlashCommand ? HandlerResult.Stop : HandlerResult.Continue;
+
+        // From here on the sender is an admin, so hints are safe: an admin writing "سکوت ۵ دقیقه" without
+        // a reply clearly meant a command and is told how, instead of nothing happening.
 
         var lang = context.Group.Lang;
         var chatId = context.ChatId;
 
         if (!await IsAllowedAsync(context, ct))
         {
+            // An admin without the "restrict members" right.
             await actions.SendTemporaryAsync(chatId, ModerationTexts.OnlyAdmins.Get(lang), HintLifetime, message.MessageId, ct);
             return HandlerResult.Stop;
         }

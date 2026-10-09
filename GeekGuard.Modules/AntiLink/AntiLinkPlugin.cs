@@ -16,7 +16,7 @@ public sealed class AntiLinkPlugin : IGeekGuardPlugin
         services.AddGroupMessageHandler<AntiLinkHandler>();
 }
 
-public sealed class AntiLinkHandler(BotActions actions) : IGroupMessageHandler
+public sealed class AntiLinkHandler(BotActions actions, NoticeThrottle throttle) : IGroupMessageHandler
 {
     private static readonly TimeSpan NoticeLifetime = TimeSpan.FromSeconds(30);
 
@@ -34,8 +34,10 @@ public sealed class AntiLinkHandler(BotActions actions) : IGroupMessageHandler
 
         await actions.DeleteAsync(context.ChatId, context.Message.MessageId, ct);
 
-        // Members posting as one of their channels have no user to mention.
-        if (context.Message is { SenderChat: null, From: { } from })
+        // Members posting as one of their channels have no user to mention. The throttle keeps a link
+        // spammer from turning the bot's own notices into spam: one notice per member per minute.
+        if (context.Message is { SenderChat: null, From: { } from }
+            && throttle.TryAcquire(context.ChatId, from.Id, AntiLinkPlugin.Id))
         {
             await actions.SendTemporaryAsync(context.ChatId, LinkRemoved.Format(context.Group.Lang, Html.Mention(from)),
                 NoticeLifetime, ct: ct);

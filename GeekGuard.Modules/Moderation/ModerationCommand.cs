@@ -52,10 +52,11 @@ public static class ModerationCommandParser
         .ToArray();
 
     /// <summary>
-    /// Reads a moderation command from a message. Keywords count only when the message is a reply and holds
-    /// nothing but the keyword (plus a duration for mute and ban), so ordinary chat never triggers them.
+    /// Reads a moderation command from a message. A keyword counts only when the message holds nothing but the
+    /// keyword (plus a duration for mute and ban), so ordinary chat never triggers it. Whether it is a reply,
+    /// and who sent it, is the handler's business.
     /// </summary>
-    public static ModerationCommand? Parse(ParsedCommand? slash, NormalizedText text, bool isReply)
+    public static ModerationCommand? Parse(ParsedCommand? slash, NormalizedText text)
     {
         if (slash is not null)
         {
@@ -72,7 +73,7 @@ public static class ModerationCommandParser
             };
         }
 
-        if (!isReply || text.IsEmpty) return null;
+        if (text.IsEmpty) return null;
 
         foreach (var (keyword, action) in Keywords)
         {
