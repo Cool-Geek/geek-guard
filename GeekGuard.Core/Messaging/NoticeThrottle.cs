@@ -18,24 +18,32 @@ public sealed class NoticeThrottle(TimeProvider clock)
     /// True if a notice of this <paramref name="kind"/> may be sent now; records it if so.
     /// The action itself (deleting the message, warning) always happens; only the notice is skipped.
     /// </summary>
-    public bool TryAcquire(long chatId, long userId, string kind, TimeSpan? window = null)
+    public bool TryAcquire(long chatId, long userId, string kind, TimeSpan? window = null) =>
+        TryAcquire(chatId, userId, kind, out _, window);
+
+    /// <inheritdoc cref="TryAcquire(long, long, string, TimeSpan?)"/>
+    /// <param name="wait">When refused, how long until it will be allowed again.</param>
+    public bool TryAcquire(long chatId, long userId, string kind, out TimeSpan wait, TimeSpan? window = null)
     {
         var now = clock.GetUtcNow();
         var gap = window ?? DefaultWindow;
         var key = (chatId, userId, kind);
 
         var allowed = true;
+        var remaining = TimeSpan.Zero;
         _last.AddOrUpdate(key, now, (_, previous) =>
         {
             if (now - previous < gap)
             {
                 allowed = false;
+                remaining = gap - (now - previous);
                 return previous;
             }
             return now;
         });
 
         if (now - _lastSweep > TimeSpan.FromMinutes(10)) Sweep(now);
+        wait = remaining;
         return allowed;
     }
 

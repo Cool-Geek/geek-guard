@@ -63,8 +63,8 @@ public sealed class ReportHandler(
 {
     private static readonly string[] Keywords = new[] { "گزارش", "ریپورت", "report" }.Select(PersianNormalizer.Normalize).ToArray();
 
-    /// <summary>One report per member per two minutes; extra ones are removed without a word.</summary>
-    private static readonly TimeSpan ReportWindow = TimeSpan.FromMinutes(2);
+    /// <summary>One report per member per minute, so nobody can flood the admins' private chats.</summary>
+    private static readonly TimeSpan ReportWindow = TimeSpan.FromMinutes(1);
 
     private static readonly TimeSpan ConfirmLifetime = TimeSpan.FromSeconds(15);
 
@@ -73,6 +73,9 @@ public sealed class ReportHandler(
     private static readonly Localized ReplyNeeded = new(
         "↩️ {0}، برای گزارش روی همان پیام ریپلای کن و بنویس «گزارش».",
         "↩️ {0}, reply to the message you want to report with /report.");
+    private static readonly Localized TooSoon = new(
+        "⏳ {0}، هر دقیقه فقط یک گزارش می‌شود فرستاد. {1} ثانیه دیگر دوباره امتحان کن.",
+        "⏳ {0}, one report per minute. Try again in {1} seconds.");
     private static readonly Localized NobodyReachable = new(
         "⚠️ گزارش ثبت شد، اما هیچ‌کدام از ادمین‌ها ربات را استارت نکرده‌اند.\nادمین‌ها: برای دریافت گزارش‌ها یک بار به @{0} پیام /start بدهید.",
         "⚠️ Report received, but no admin has started the bot yet.\nAdmins: send /start to @{0} once to receive reports.");
@@ -111,7 +114,14 @@ public sealed class ReportHandler(
             return HandlerResult.Stop;
         }
 
-        if (!throttle.TryAcquire(chatId, reporter.Id, ReportsPlugin.Id, ReportWindow)) return HandlerResult.Stop;
+        if (!throttle.TryAcquire(chatId, reporter.Id, ReportsPlugin.Id, out var wait, ReportWindow))
+        {
+            // Say why once; further attempts in the same minute are removed quietly.
+            if (throttle.TryAcquire(chatId, reporter.Id, ReportsPlugin.Id + ":wait", ReportWindow))
+                await actions.SendTemporaryAsync(chatId,
+                    TooSoon.Format(lang, Html.Mention(reporter), Math.Max(1, (int)Math.Ceiling(wait.TotalSeconds))), ConfirmLifetime, ct: ct);
+            return HandlerResult.Stop;
+        }
 
         // Already reported by someone else in the last hour: the admins know; just thank this member.
         if (reports.TryAdd(chatId, reported.MessageId))
