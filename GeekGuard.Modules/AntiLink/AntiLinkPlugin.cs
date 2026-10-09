@@ -1,28 +1,39 @@
 using CoolGeek.PersianText;
 using GeekGuard.Core.Messaging;
+using GeekGuard.Modules.Filters;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
 namespace GeekGuard.Modules.AntiLink;
 
-/// <summary>Removes links posted by members, including disguised ones like "t . me" and link buttons.</summary>
+/// <summary>
+/// Removes links posted by members, including disguised ones like "t . me", links hidden behind text,
+/// and link buttons. By default the member also gets a warning.
+/// </summary>
 public sealed class AntiLinkPlugin : IGeekGuardPlugin
 {
     public const string Id = "anti-link";
 
     public PluginManifest Manifest { get; } = new(Id, "ضدلینک", "Anti-link", PluginTier.Free, EnabledByDefault: true);
 
-    public void ConfigureServices(IServiceCollection services, IConfiguration configuration) =>
+    public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+    {
+        services.TryAddSingleton<ViolationService>();
         services.AddGroupMessageHandler<AntiLinkHandler>();
+    }
 }
 
-public sealed class AntiLinkHandler(BotActions actions, NoticeThrottle throttle) : IGroupMessageHandler
+/// <summary>Per-group anti-link settings.</summary>
+public sealed class AntiLinkSettings
 {
-    private static readonly TimeSpan NoticeLifetime = TimeSpan.FromSeconds(30);
+    /// <summary>Warn the member as well as removing the link.</summary>
+    public bool WarnOnViolation { get; set; } = true;
+}
 
-    private static readonly Localized LinkRemoved = new(
-        "🔗 {0}، ارسال لینک در این گروه مجاز نیست.",
-        "🔗 {0}, links are not allowed in this group.");
+public sealed class AntiLinkHandler(ViolationService violations, PluginStateStore states) : IGroupMessageHandler
+{
+    private static readonly Localized Reason = new("ارسال لینک در این گروه مجاز نیست.", "links are not allowed in this group.");
 
     public string PluginId => AntiLinkPlugin.Id;
 
@@ -32,16 +43,8 @@ public sealed class AntiLinkHandler(BotActions actions, NoticeThrottle throttle)
     {
         if (context.SenderIsAdmin || !ContainsLink(context.Message, context.NormalizedText)) return HandlerResult.Continue;
 
-        await actions.DeleteAsync(context.ChatId, context.Message.MessageId, ct);
-
-        // Members posting as one of their channels have no user to mention. The throttle keeps a link
-        // spammer from turning the bot's own notices into spam: one notice per member per minute.
-        if (context.Message is { SenderChat: null, From: { } from }
-            && throttle.TryAcquire(context.ChatId, from.Id, AntiLinkPlugin.Id))
-        {
-            await actions.SendTemporaryAsync(context.ChatId, LinkRemoved.Format(context.Group.Lang, Html.Mention(from)),
-                NoticeLifetime, ct: ct);
-        }
+        var settings = await states.GetSettingsAsync<AntiLinkSettings>(context.ChatId, AntiLinkPlugin.Id, ct);
+        await violations.HandleAsync(context, Reason, settings.WarnOnViolation, AntiLinkPlugin.Id, ct);
         return HandlerResult.Stop;
     }
 
