@@ -15,11 +15,12 @@ public sealed class GroupMessagePipeline
     private readonly (IGroupMessageHandler Handler, PluginManifest Plugin)[] _handlers;
     private readonly PluginStateStore _states;
     private readonly GroupDirectory _groups;
+    private readonly GroupAdmins _admins;
     private readonly BotIdentity _me;
     private readonly ILogger<GroupMessagePipeline> _log;
 
     public GroupMessagePipeline(IEnumerable<IGroupMessageHandler> handlers, PluginCatalog catalog,
-        PluginStateStore states, GroupDirectory groups, BotIdentity me, ILogger<GroupMessagePipeline> log)
+        PluginStateStore states, GroupDirectory groups, GroupAdmins admins, BotIdentity me, ILogger<GroupMessagePipeline> log)
     {
         // Resolving manifests here makes a handler with a wrong PluginId fail at startup, not on the first message.
         _handlers = handlers
@@ -28,6 +29,7 @@ public sealed class GroupMessagePipeline
             .ToArray();
         _states = states;
         _groups = groups;
+        _admins = admins;
         _me = me;
         _log = log;
     }
@@ -43,6 +45,7 @@ public sealed class GroupMessagePipeline
             Message = message,
             Group = group,
             Command = CommandParser.Parse(message.Text, _me.Username),
+            SenderIsAdmin = await IsFromAdminAsync(message, ct),
         };
 
         foreach (var (handler, plugin) in _handlers)
@@ -55,5 +58,16 @@ public sealed class GroupMessagePipeline
                 return;
             }
         }
+    }
+
+    /// <summary>
+    /// Admins, anonymous admins (who post as the group) and the group's linked channel are trusted.
+    /// A member posting as one of their own channels is not.
+    /// </summary>
+    private async Task<bool> IsFromAdminAsync(Message message, CancellationToken ct)
+    {
+        if (message.IsAutomaticForward) return true;
+        if (message.SenderChat is { } senderChat) return senderChat.Id == message.Chat.Id;
+        return message.From is { } from && await _admins.IsAdminAsync(message.Chat.Id, from.Id, ct);
     }
 }

@@ -15,6 +15,8 @@ public static class CoreServiceCollectionExtensions
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<BotIdentity>();
         services.AddSingleton<GroupDirectory>();
+        services.AddSingleton<GroupAdmins>();
+        services.AddSingleton<BotActions>();
         services.AddSingleton<PluginStateStore>();
         return services;
     }

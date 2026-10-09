@@ -12,6 +12,7 @@ public sealed class UpdateRouter(
     ITelegramBotClient bot,
     UserRepository users,
     GroupDirectory groups,
+    GroupAdmins admins,
     GroupMessagePipeline groupPipeline,
     ILogger<UpdateRouter> log)
 {
@@ -20,6 +21,7 @@ public sealed class UpdateRouter(
         { Message: { Chat.Type: ChatType.Private } message } => HandlePrivateMessageAsync(message, ct),
         { Message: { Chat.Type: ChatType.Group or ChatType.Supergroup } message } => groupPipeline.RunAsync(message, ct),
         { MyChatMember: { } change } => HandleMyMembershipAsync(change, ct),
+        { ChatMember: { } change } => HandleMemberChangedAsync(change),
         _ => Task.CompletedTask,
     };
 
@@ -50,6 +52,7 @@ public sealed class UpdateRouter(
         {
             await groups.GetOrAddAsync(change.Chat.Id, change.Chat.Title ?? "", change.From.Id,
                 Languages.FromTelegram(change.From.LanguageCode), ct);
+            await admins.RefreshAsync(change.Chat.Id, ct);
             log.LogInformation("Bot is in group {Chat} ({Title}) as {Status}",
                 change.Chat.Id, change.Chat.Title, change.NewChatMember.Status);
         }
@@ -58,5 +61,12 @@ public sealed class UpdateRouter(
             await groups.DeactivateAsync(change.Chat.Id, ct);
             log.LogInformation("Bot left group {Chat} ({Title})", change.Chat.Id, change.Chat.Title);
         }
+    }
+
+    /// <summary>Someone else's status changed (needs the bot to be an admin to receive these).</summary>
+    private Task HandleMemberChangedAsync(ChatMemberUpdated change)
+    {
+        admins.OnMemberChanged(change);
+        return Task.CompletedTask;
     }
 }

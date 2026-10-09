@@ -1,3 +1,4 @@
+using CoolGeek.PersianText;
 using GeekGuard.Core.Groups;
 using GeekGuard.Core.Messaging;
 using Telegram.Bot.Types;
@@ -24,7 +25,24 @@ public sealed class GroupMessageContext
     /// <summary>The slash command in the message, if it is addressed to this bot.</summary>
     public ParsedCommand? Command { get; init; }
 
+    /// <summary>
+    /// True when the sender is a group admin, an anonymous admin, or the group's linked channel.
+    /// Filters and locks leave these messages alone.
+    /// </summary>
+    public required bool SenderIsAdmin { get; init; }
+
+    /// <summary>True when an admin posted anonymously, i.e. as the group itself.</summary>
+    public bool IsAnonymousAdmin => Message.SenderChat?.Id == ChatId;
+
     public long ChatId => Message.Chat.Id;
+
+    /// <summary>Text or caption of the message.</summary>
+    public string Text => Message.Text ?? Message.Caption ?? "";
+
+    private NormalizedText? _normalized;
+
+    /// <summary>The text normalized once for every filter that needs it.</summary>
+    public NormalizedText NormalizedText => _normalized ??= NormalizedText.From(Text);
 }
 
 /// <summary>
