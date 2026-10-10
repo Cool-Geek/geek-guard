@@ -19,6 +19,7 @@ public sealed class ModerationPlugin : IGeekGuardPlugin
         services.AddGroupMessageHandler<ModerationHandler>();
         services.AddGroupMessageHandler<ModerationSettingsHandler>();
         services.AddPanelSection<ModerationSection>();
+        services.AddHelpTopic(Help.HelpTopics.Moderation);
         services.AddPluginMigrations(Id, GetType());
     }
 }

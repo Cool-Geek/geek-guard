@@ -13,8 +13,11 @@ public sealed class DiagnosticsPlugin : IGeekGuardPlugin
 
     public PluginManifest Manifest { get; } = new(Id, "عیب‌یابی", "Diagnostics", PluginTier.Free, EnabledByDefault: true);
 
-    public void ConfigureServices(IServiceCollection services, IConfiguration configuration) =>
+    public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+    {
         services.AddGroupMessageHandler<PingHandler>();
+        services.AddHelpTopic(Help.HelpTopics.Diagnostics);
+    }
 }
 
 public sealed class PingHandler(

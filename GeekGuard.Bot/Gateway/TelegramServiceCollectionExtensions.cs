@@ -1,7 +1,9 @@
 using System.Net;
 using GeekGuard.Bot.Configuration;
+using GeekGuard.Bot.Help;
 using GeekGuard.Bot.Panel;
 using GeekGuard.Core.Callbacks;
+using GeekGuard.Core.Private;
 using Microsoft.Extensions.Options;
 using Telegram.Bot;
 
@@ -23,6 +25,9 @@ public static class TelegramServiceCollectionExtensions
         services.AddSingleton<UpdateRouter>();
         services.AddSingleton<PanelNavigator>();
         services.AddSingleton<ICallbackHandler>(sp => sp.GetRequiredService<PanelNavigator>());
+        services.AddSingleton<HelpNavigator>();
+        services.AddSingleton<ICallbackHandler>(sp => sp.GetRequiredService<HelpNavigator>());
+        services.AddSingleton<IStartLinkHandler>(sp => sp.GetRequiredService<HelpNavigator>());
         services.AddSingleton<GroupMessagePipeline>();
         services.AddHostedService<UpdateReceiver>();
         return services;

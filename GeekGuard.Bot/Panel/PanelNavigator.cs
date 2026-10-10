@@ -48,6 +48,7 @@ public sealed class PanelNavigator(
         "There is no group yet where I'm in and you're an admin.\nAdd me to your group as an admin (delete messages + restrict members), then send /start again.");
     private static readonly Localized AddToGroup = new("➕ افزودن من به گروه", "➕ Add me to a group");
     private static readonly Localized SwitchLang = new("🌐 English", "🌐 فارسی");
+    private static readonly Localized Guide = new("📖 راهنما", "📖 Guide");
     private static readonly Localized GroupTitle = new("⚙️ تنظیمات «{0}»", "⚙️ Settings of “{0}”");
     private static readonly Localized ViewOnly = new(
         "👁 فقط مشاهده: تغییر تنظیمات برای سازنده‌ی گروه و ادمین‌هایی است که اجازه‌ی «محدود کردن اعضا» دارند.",
@@ -209,7 +210,10 @@ public sealed class PanelNavigator(
                 PanelButtons.Data("g", g.ChatId.ToString())),
         }).ToList();
         rows.Add([InlineKeyboardButton.WithUrl(AddToGroup.Get(lang), $"https://t.me/{me.Username}?startgroup=true")]);
-        rows.Add([InlineKeyboardButton.WithCallbackData(SwitchLang.Get(lang), PanelButtons.Data("l"))]);
+        rows.Add([
+            InlineKeyboardButton.WithCallbackData(Guide.Get(lang), "hp:h"),
+            InlineKeyboardButton.WithCallbackData(SwitchLang.Get(lang), PanelButtons.Data("l")),
+        ]);
 
         var html = Hello.Format(lang, Html.Escape(user.FirstName), (mine.Count > 0 ? PickGroup : NoGroups).Get(lang));
         return new PanelView(html, new InlineKeyboardMarkup(rows));

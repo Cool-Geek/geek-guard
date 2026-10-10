@@ -21,6 +21,7 @@ public sealed class WelcomePlugin : IGeekGuardPlugin
         services.AddGroupMessageHandler<WelcomeHandler>();
         services.AddGroupMessageHandler<WelcomeCommandsHandler>();
         services.AddPanelSection<WelcomeSection>();
+        services.AddHelpTopic(Help.HelpTopics.Welcome);
     }
 }
 

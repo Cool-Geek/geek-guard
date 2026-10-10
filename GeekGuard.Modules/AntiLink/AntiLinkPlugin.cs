@@ -22,6 +22,7 @@ public sealed class AntiLinkPlugin : IGeekGuardPlugin
         services.TryAddSingleton<ViolationService>();
         services.AddGroupMessageHandler<AntiLinkHandler>();
         services.AddPanelSection<AntiLinkSection>();
+        services.AddHelpTopic(Help.HelpTopics.AntiLink);
     }
 }
 

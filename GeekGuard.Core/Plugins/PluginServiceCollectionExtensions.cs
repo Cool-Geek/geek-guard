@@ -1,5 +1,6 @@
 using GeekGuard.Core.Callbacks;
 using GeekGuard.Core.Data.Migrations;
+using GeekGuard.Core.Help;
 using GeekGuard.Core.Panel;
 using GeekGuard.Core.Private;
 using GeekGuard.Core.Pipeline;
@@ -38,6 +39,13 @@ public static class PluginServiceCollectionExtensions
         where TSection : class, IPanelSection
     {
         services.AddSingleton<IPanelSection, TSection>();
+        return services;
+    }
+
+    /// <summary>Adds a page to the user guide; see <see cref="HelpTopic"/>.</summary>
+    public static IServiceCollection AddHelpTopic(this IServiceCollection services, HelpTopic topic)
+    {
+        services.AddSingleton(topic);
         return services;
     }
 
