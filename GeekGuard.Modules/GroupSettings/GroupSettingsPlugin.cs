@@ -13,8 +13,11 @@ public sealed class GroupSettingsPlugin : IGeekGuardPlugin
 
     public PluginManifest Manifest { get; } = new(Id, "تنظیمات گروه", "Group settings", PluginTier.Free, EnabledByDefault: true);
 
-    public void ConfigureServices(IServiceCollection services, IConfiguration configuration) =>
+    public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+    {
         services.AddGroupMessageHandler<LanguageHandler>();
+        services.AddPanelSection<LanguageSection>();
+    }
 }
 
 public sealed class LanguageHandler(GroupDirectory groups, BotActions actions) : IGroupMessageHandler

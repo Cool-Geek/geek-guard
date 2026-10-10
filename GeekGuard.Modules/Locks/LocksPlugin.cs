@@ -23,6 +23,7 @@ public sealed class LocksPlugin : IGeekGuardPlugin
         services.AddGroupMessageHandler<LockCommandsHandler>();
         services.AddGroupMessageHandler<JoinLocksHandler>();
         services.AddGroupMessageHandler<ContentLocksHandler>();
+        services.AddPanelSection<LocksSection>();
     }
 }
 

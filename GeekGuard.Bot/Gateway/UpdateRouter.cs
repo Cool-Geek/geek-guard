@@ -1,3 +1,4 @@
+using GeekGuard.Bot.Panel;
 using GeekGuard.Core.Callbacks;
 using GeekGuard.Core.Groups;
 using GeekGuard.Core.Private;
@@ -11,7 +12,6 @@ namespace GeekGuard.Bot.Gateway;
 
 /// <summary>Sends each update to the part of the bot that handles it.</summary>
 public sealed class UpdateRouter(
-    ITelegramBotClient bot,
     UserRepository users,
     GroupDirectory groups,
     GroupAdmins admins,
@@ -19,6 +19,7 @@ public sealed class UpdateRouter(
     BotActions actions,
     IEnumerable<ICallbackHandler> callbackHandlers,
     IEnumerable<IStartLinkHandler> startLinkHandlers,
+    PanelNavigator panel,
     ILogger<UpdateRouter> log)
 {
     private readonly Dictionary<string, IStartLinkHandler> _startLinks =
@@ -38,7 +39,7 @@ public sealed class UpdateRouter(
         _ => Task.CompletedTask,
     };
 
-    /// <summary>Private chat. The settings panel replaces this in a later step.</summary>
+    /// <summary>Private chat: /start opens the settings panel; /start with a link parameter goes to its plugin.</summary>
     private async Task HandlePrivateMessageAsync(Message message, CancellationToken ct)
     {
         if (message is not { Text: { } text, From: { } from } || !text.StartsWith("/start", StringComparison.Ordinal))
@@ -55,12 +56,8 @@ public sealed class UpdateRouter(
             return;
         }
 
-        var total = await users.CountAsync(ct);
-        log.LogInformation("/start from {UserId}; {Total} user(s) in the database", from.Id, total);
-
-        await bot.SendMessage(message.Chat.Id,
-            $"سلام! 👋 من Geek Guard هستم و آنلاینم ✅\nHi! 👋 I'm Geek Guard and I'm online ✅\n\n🗄 users: {total}",
-            cancellationToken: ct);
+        log.LogInformation("/start from {UserId}", from.Id);
+        await panel.ShowHomeAsync(message.Chat.Id, from, ct);
     }
 
     /// <summary>An inline button was pressed: hand it to the plugin that owns the button's prefix.</summary>

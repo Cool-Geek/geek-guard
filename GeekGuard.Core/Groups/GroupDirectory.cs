@@ -53,6 +53,23 @@ public sealed class GroupDirectory(NpgsqlDataSource db)
             new { chatId }, cancellationToken: ct));
     }
 
+    /// <summary>Active groups where the user is an admin (as last read from Telegram), by title.</summary>
+    public async Task<IReadOnlyList<GroupInfo>> ListForAdminAsync(long userId, CancellationToken ct = default)
+    {
+        await using var connection = await db.OpenConnectionAsync(ct);
+        var rows = await connection.QueryAsync<GroupInfo>(new CommandDefinition(
+            """
+            SELECT g.chat_id AS ChatId, g.title AS Title, g.active AS Active, g.lang AS Lang
+              FROM groups g
+              JOIN group_admins a ON a.chat_id = g.chat_id
+             WHERE a.user_id = @userId AND g.active
+             ORDER BY g.title
+             LIMIT 50
+            """,
+            new { userId }, cancellationToken: ct));
+        return rows.ToList();
+    }
+
     /// <summary>Changes the language of the bot's messages in a group.</summary>
     public async Task SetLangAsync(long chatId, string lang, CancellationToken ct = default)
     {

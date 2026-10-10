@@ -33,6 +33,26 @@ public sealed class UserRepository(NpgsqlDataSource db)
             cancellationToken: ct));
     }
 
+    public async Task<BotUser?> GetAsync(long userId, CancellationToken ct = default)
+    {
+        await using var connection = await db.OpenConnectionAsync(ct);
+        return await connection.QuerySingleOrDefaultAsync<BotUser>(new CommandDefinition(
+            """
+            SELECT user_id AS UserId, first_name AS FirstName, username AS Username,
+                   language_code AS LanguageCode, lang AS Lang
+              FROM users WHERE user_id = @userId
+            """,
+            new { userId }, cancellationToken: ct));
+    }
+
+    /// <summary>The language the user picked for the panel.</summary>
+    public async Task SetLangAsync(long userId, string lang, CancellationToken ct = default)
+    {
+        await using var connection = await db.OpenConnectionAsync(ct);
+        await connection.ExecuteAsync(new CommandDefinition(
+            "UPDATE users SET lang = @lang WHERE user_id = @userId", new { userId, lang }, cancellationToken: ct));
+    }
+
     public async Task<int> CountAsync(CancellationToken ct = default)
     {
         await using var connection = await db.OpenConnectionAsync(ct);

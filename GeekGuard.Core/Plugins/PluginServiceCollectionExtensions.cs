@@ -1,5 +1,6 @@
 using GeekGuard.Core.Callbacks;
 using GeekGuard.Core.Data.Migrations;
+using GeekGuard.Core.Panel;
 using GeekGuard.Core.Private;
 using GeekGuard.Core.Pipeline;
 
@@ -29,6 +30,14 @@ public static class PluginServiceCollectionExtensions
         where THandler : class, IStartLinkHandler
     {
         services.AddSingleton<IStartLinkHandler, THandler>();
+        return services;
+    }
+
+    /// <summary>Adds a section to every group's settings panel; see <see cref="IPanelSection"/>.</summary>
+    public static IServiceCollection AddPanelSection<TSection>(this IServiceCollection services)
+        where TSection : class, IPanelSection
+    {
+        services.AddSingleton<IPanelSection, TSection>();
         return services;
     }
 

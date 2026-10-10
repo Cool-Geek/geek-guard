@@ -24,6 +24,7 @@ public sealed class ReportsPlugin : IGeekGuardPlugin
         services.AddSingleton<ReportStore>();
         services.AddGroupMessageHandler<ReportHandler>();
         services.AddCallbackHandler<ReportButtonHandler>();
+        services.AddPanelSection<ReportsSection>();
         services.AddPluginMigrations(Id, GetType());
     }
 }

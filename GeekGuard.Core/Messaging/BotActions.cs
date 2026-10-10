@@ -59,6 +59,30 @@ public sealed class BotActions(ITelegramBotClient bot, ILogger<BotActions> log)
         }
     }
 
+    /// <summary>
+    /// Replaces a message's text and buttons (used by the panel to move between screens).
+    /// "Not modified" — pressing the option that is already chosen — counts as success.
+    /// </summary>
+    public async Task<bool> EditAsync(long chatId, int messageId, string html, InlineKeyboardMarkup? keyboard,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            await bot.EditMessageText(chatId, messageId, html, ParseMode.Html, replyMarkup: keyboard,
+                linkPreviewOptions: NoPreview, cancellationToken: ct);
+            return true;
+        }
+        catch (ApiRequestException ex) when (ex.Message.Contains("not modified", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+        catch (ApiRequestException ex)
+        {
+            log.LogDebug("editMessageText in {Chat} refused: {Message}", chatId, ex.Message);
+            return false;
+        }
+    }
+
     /// <summary>Replaces the buttons under a message. Returns false if Telegram refused (e.g. message deleted).</summary>
     public async Task<bool> EditButtonsAsync(long chatId, int messageId, InlineKeyboardMarkup? keyboard, CancellationToken ct = default)
     {
