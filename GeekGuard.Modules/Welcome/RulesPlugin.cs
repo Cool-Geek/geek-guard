@@ -174,7 +174,7 @@ public sealed class RulesLinkHandler(PluginStateStore states, GroupDirectory gro
         var settings = await states.GetSettingsAsync<RulesSettings>(chatId, RulesPlugin.Id, ct);
         var text = settings.Text.Length == 0
             ? None.Get(lang)
-            : $"{Title.Format(lang, Html.Escape(group.Title))}\n\n{Html.Escape(settings.Text)}";
+            : $"{Title.Format(lang, Html.Escape(group.Title))}\n\n{Html.Escape(Bidi.Mark(settings.Text, lang))}";
         await actions.SendAsync(message.Chat.Id, text, ct: ct);
     }
 }

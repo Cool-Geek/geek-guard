@@ -51,9 +51,9 @@ public static partial class Duration
     /// <summary>"2 ساعت" / "2 h", picking the largest whole unit.</summary>
     public static string Format(TimeSpan span, string lang)
     {
-        if (span.TotalDays >= 1 && span.TotalDays % 1 == 0) return Days.Format(lang, (int)span.TotalDays);
-        if (span.TotalHours >= 1 && span.TotalHours % 1 == 0) return Hours.Format(lang, (int)span.TotalHours);
-        if (span.TotalMinutes >= 1 && span.TotalMinutes % 1 == 0) return Minutes.Format(lang, (int)span.TotalMinutes);
-        return Seconds.Format(lang, (int)Math.Ceiling(span.TotalSeconds));
+        if (span.TotalDays >= 1 && span.TotalDays % 1 == 0) return string.Format(Days.Raw(lang), (int)span.TotalDays);
+        if (span.TotalHours >= 1 && span.TotalHours % 1 == 0) return string.Format(Hours.Raw(lang), (int)span.TotalHours);
+        if (span.TotalMinutes >= 1 && span.TotalMinutes % 1 == 0) return string.Format(Minutes.Raw(lang), (int)span.TotalMinutes);
+        return string.Format(Seconds.Raw(lang), (int)Math.Ceiling(span.TotalSeconds));
     }
 }

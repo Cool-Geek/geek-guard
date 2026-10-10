@@ -59,7 +59,8 @@ public sealed class WelcomeSettings
     /// </summary>
     public string Render(string lang, IReadOnlyList<User> newcomers, string groupTitle, int? memberCount)
     {
-        var template = Text.Length > 0 ? Text : DefaultText.Get(lang);
+        // The admin's own text gets the group's direction too: "{name} خوش اومدی" with a Latin name must stay right to left.
+        var template = Text.Length > 0 ? Bidi.Mark(Text, lang) : DefaultText.Get(lang);
         var names = string.Join(lang == Languages.English ? ", " : "، ", newcomers.Select(Html.Mention));
         return Html.Escape(template)
             .Replace("{name}", names)
@@ -178,7 +179,7 @@ public sealed class WelcomeCommandsHandler(PluginStateStore states, BotActions a
         {
             case Verb.On or Verb.Off:
                 await states.SaveSettingsAsync(chatId, WelcomePlugin.Id, Copy(settings, enabled: verb == Verb.On), ct);
-                reply = Changed.Format(lang, (verb == Verb.On ? On : Off).Get(lang));
+                reply = Changed.Format(lang, (verb == Verb.On ? On : Off).Raw(lang));
                 break;
 
             case Verb.Reset:
@@ -199,7 +200,7 @@ public sealed class WelcomeCommandsHandler(PluginStateStore states, BotActions a
                 break;
 
             default:
-                reply = Status.Format(lang, (settings.Enabled ? On : Off).Get(lang),
+                reply = Status.Format(lang, (settings.Enabled ? On : Off).Raw(lang),
                     settings.Render(lang, sample, title, null), WelcomeSettings.Placeholders);
                 break;
         }

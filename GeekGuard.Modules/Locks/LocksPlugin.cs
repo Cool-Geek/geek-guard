@@ -211,7 +211,7 @@ public sealed class LockCommandsHandler(PluginStateStore states, BotActions acti
         string Join(IEnumerable<LockType> types)
         {
             var names = types.Select(t => LockTypes.Name(t, lang)).ToList();
-            return names.Count == 0 ? Nothing.Get(lang) : Html.Escape(string.Join("، ", names));
+            return names.Count == 0 ? Nothing.Raw(lang) : Html.Escape(string.Join("، ", names));
         }
 
         return $"{ClosedLine.Format(lang, Join(LockTypes.All.Where(settings.IsLocked)))}\n" +
