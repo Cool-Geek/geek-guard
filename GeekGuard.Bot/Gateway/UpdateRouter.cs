@@ -37,7 +37,7 @@ public sealed class UpdateRouter(
         { EditedMessage: { Chat.Type: ChatType.Group or ChatType.Supergroup } edited } => groupPipeline.RunAsync(edited, ct, isEdit: true),
         { CallbackQuery: { } query } => HandleButtonAsync(query, ct),
         { MyChatMember: { } change } => HandleMyMembershipAsync(change, ct),
-        { ChatMember: { } change } => HandleMemberChangedAsync(change),
+        { ChatMember: { } change } => admins.OnMemberChangedAsync(change, ct),
         _ => Task.CompletedTask,
     };
 
@@ -111,12 +111,5 @@ public sealed class UpdateRouter(
             await groups.DeactivateAsync(change.Chat.Id, ct);
             log.LogInformation("Bot left group {Chat} ({Title})", change.Chat.Id, change.Chat.Title);
         }
-    }
-
-    /// <summary>Someone else's status changed (needs the bot to be an admin to receive these).</summary>
-    private Task HandleMemberChangedAsync(ChatMemberUpdated change)
-    {
-        admins.OnMemberChanged(change);
-        return Task.CompletedTask;
     }
 }

@@ -202,7 +202,13 @@ public sealed class PanelNavigator(
     private async Task<PanelView> HomeAsync(User user, CancellationToken ct)
     {
         var lang = await UserLangAsync(user, ct);
-        var mine = await groups.ListForAdminAsync(user.Id, ct);
+        // The stored list says where the user was an admin; Telegram is asked again (cached for minutes) so a group
+        // they no longer administer, or one they were only ever a member of, never shows up.
+        var mine = new List<GroupInfo>();
+        foreach (var group in await groups.ListForAdminAsync(user.Id, ct))
+        {
+            if (await admins.IsAdminAsync(group.ChatId, user.Id, ct)) mine.Add(group);
+        }
 
         var rows = mine.Select(g => new[]
         {

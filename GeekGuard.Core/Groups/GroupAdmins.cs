@@ -81,15 +81,28 @@ public sealed class GroupAdmins(ITelegramBotClient bot, NpgsqlDataSource db, ILo
         }
     }
 
-    /// <summary>Someone's status changed in a group: drop what we cached about it.</summary>
-    public void OnMemberChanged(ChatMemberUpdated change)
+    /// <summary>
+    /// Someone's status changed in a group: drop what we cached and update the stored admin list at once,
+    /// so the settings panel never lists a group for someone who was just removed as admin.
+    /// </summary>
+    public async Task OnMemberChangedAsync(ChatMemberUpdated change, CancellationToken ct = default)
     {
-        if (IsAdminStatus(change.OldChatMember.Status) != IsAdminStatus(change.NewChatMember.Status)
-            || change.NewChatMember is ChatMemberAdministrator)
-        {
-            _admins.TryRemove(change.Chat.Id, out _);
-            _rights.TryRemove((change.Chat.Id, change.NewChatMember.User.Id), out _);
-        }
+        var wasAdmin = IsAdminStatus(change.OldChatMember.Status);
+        var isAdmin = IsAdminStatus(change.NewChatMember.Status);
+        if (wasAdmin == isAdmin && change.NewChatMember is not ChatMemberAdministrator) return;
+
+        var chatId = change.Chat.Id;
+        var user = change.NewChatMember.User;
+        _admins.TryRemove(chatId, out _);
+        _rights.TryRemove((chatId, user.Id), out _);
+        if (wasAdmin == isAdmin || user.IsBot) return;
+
+        await using var connection = await db.OpenConnectionAsync(ct);
+        await connection.ExecuteAsync(new CommandDefinition(
+            isAdmin
+                ? "INSERT INTO group_admins (chat_id, user_id) VALUES (@chatId, @userId) ON CONFLICT DO NOTHING"
+                : "DELETE FROM group_admins WHERE chat_id = @chatId AND user_id = @userId",
+            new { chatId, userId = user.Id }, cancellationToken: ct));
     }
 
     /// <summary>The bot's own rights in a group, for diagnostics and setup hints.</summary>
