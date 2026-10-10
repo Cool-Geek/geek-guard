@@ -24,6 +24,7 @@ public sealed class ReportsSection : IPanelSection
     public Task<PanelView> ShowAsync(PanelContext context, CancellationToken ct) =>
         Task.FromResult(new PanelView(context.T(Text), new InlineKeyboardMarkup(new[]
         {
+            PanelButtons.Header(context.Lang == Languages.English ? "🚩 Reports" : "🚩 گزارش‌ها"),
             new[] { PanelButtons.PluginSwitch(context, Id) },
             new[] { PanelButtons.BackToGroup(context) },
         })));

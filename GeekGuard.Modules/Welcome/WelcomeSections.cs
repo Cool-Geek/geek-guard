@@ -44,14 +44,17 @@ public sealed class WelcomeSection(PluginStateStore states) : IPanelSection, IPa
 
         var keyboard = new InlineKeyboardMarkup(new[]
         {
-            new[] { PanelButtons.Action(s.Enabled ? (fa ? "✅ روشن — زدن برای خاموش کردن" : "✅ On — tap to turn off")
-                                                  : (fa ? "❌ خاموش — زدن برای روشن کردن" : "❌ Off — tap to turn on"), context, Id, "on") },
+            PanelButtons.Header(fa ? "👋 خوشامدگویی" : "👋 Welcome"),
+            new[] { PanelButtons.Toggle(s.Enabled ? (fa ? "روشن — زدن برای خاموش کردن" : "On — tap to turn off")
+                                                  : (fa ? "خاموش — زدن برای روشن کردن" : "Off — tap to turn on"), s.Enabled, context, Id, "on") },
+            PanelButtons.Header(fa ? "✏️ متن" : "✏️ Text"),
             new[]
             {
-                PanelButtons.AskText(fa ? "✏️ ویرایش متن" : "✏️ Edit text", context, Id, "text"),
+                PanelButtons.Primary(PanelButtons.AskText(fa ? "✏️ ویرایش متن" : "✏️ Edit text", context, Id, "text")),
                 PanelButtons.Action(fa ? "↩️ متن پیش‌فرض" : "↩️ Default text", context, Id, "reset"),
             },
-            new[] { PanelButtons.Action((s.DeletePrevious ? "✅ " : "❌ ") + (fa ? "فقط آخرین خوشامد بماند" : "Keep only the latest welcome"), context, Id, "prev") },
+            PanelButtons.Header(fa ? "🧹 خوشامدهای قبلی" : "🧹 Older welcomes"),
+            new[] { PanelButtons.Toggle(fa ? "فقط آخرین خوشامد بماند" : "Keep only the latest", s.DeletePrevious, context, Id, "prev") },
             new[] { PanelButtons.BackToGroup(context) },
         });
         return new PanelView(html, keyboard);
@@ -119,9 +122,9 @@ public sealed class RulesSection(PluginStateStore states) : IPanelSection, IPane
 
         var rows = new List<InlineKeyboardButton[]>
         {
-            new[] { PanelButtons.AskText(fa ? "✏️ نوشتن قوانین" : "✏️ Write rules", context, Id, "text") },
+            new[] { PanelButtons.Primary(PanelButtons.AskText(fa ? "✏️ نوشتن قوانین" : "✏️ Write rules", context, Id, "text")) },
         };
-        if (s.Text.Length > 0) rows.Add(new[] { PanelButtons.Action(fa ? "🗑 حذف قوانین" : "🗑 Remove rules", context, Id, "clear") });
+        if (s.Text.Length > 0) rows.Add(new[] { PanelButtons.Danger(fa ? "🗑 حذف قوانین" : "🗑 Remove rules", context, Id, "clear") });
         rows.Add(new[] { PanelButtons.BackToGroup(context) });
         return new PanelView(context.T(Text).Replace("{0}", body), new InlineKeyboardMarkup(rows));
     }

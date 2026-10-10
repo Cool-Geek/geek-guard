@@ -27,8 +27,10 @@ public sealed class AntiLinkSection(PluginStateStore states) : IPanelSection
         var fa = context.Lang != Languages.English;
         var keyboard = new InlineKeyboardMarkup(new[]
         {
+            PanelButtons.Header(fa ? "🔗 ضدلینک" : "🔗 Anti-link"),
             new[] { PanelButtons.PluginSwitch(context, Id) },
-            new[] { PanelButtons.Action((s.WarnOnViolation ? "✅ " : "❌ ") + (fa ? "اخطار به فرستنده" : "Warn the sender"), context, Id, "warn") },
+            PanelButtons.Header(fa ? "⚠️ فرستنده‌ی لینک" : "⚠️ Sender of a link"),
+            new[] { PanelButtons.Toggle(fa ? "اخطار بگیرد" : "Gets a warning", s.WarnOnViolation, context, Id, "warn") },
             new[] { PanelButtons.BackToGroup(context) },
         });
         return new PanelView(context.T(Text).Replace("{0}", s.WarnOnViolation ? "✅" : "❌"), keyboard);

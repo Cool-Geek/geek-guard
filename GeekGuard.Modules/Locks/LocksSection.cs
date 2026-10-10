@@ -27,16 +27,20 @@ public sealed class LocksSection(PluginStateStore states) : IPanelSection
         var lang = context.Lang;
         var fa = lang != Languages.English;
 
-        var rows = LockTypes.All
-            .Select(t => PanelButtons.Action($"{(s.IsLocked(t) ? "🔒" : "🔓")} {LockTypes.Name(t, lang)}", context, Id, "t", t.ToString()))
-            .Chunk(2)
-            .ToList();
+        var rows = new List<InlineKeyboardButton[]> { PanelButtons.Header(fa ? "🔒 قفل = قرمز · 🔓 آزاد" : "🔒 locked = red · 🔓 allowed") };
+        rows.AddRange(LockTypes.All
+            .Select(t => s.IsLocked(t)
+                ? PanelButtons.Danger("🔒 " + LockTypes.Name(t, lang), context, Id, "t", t.ToString())
+                : PanelButtons.Action("🔓 " + LockTypes.Name(t, lang), context, Id, "t", t.ToString()))
+            .Chunk(2));
+        rows.Add(PanelButtons.Header(fa ? "⚡ همه با هم" : "⚡ All at once"));
         rows.Add(new[]
         {
             PanelButtons.Action(fa ? "🔒 قفل همه" : "🔒 Lock all", context, Id, "all"),
             PanelButtons.Action(fa ? "🔓 باز کردن همه" : "🔓 Unlock all", context, Id, "none"),
         });
-        rows.Add(new[] { PanelButtons.Action((s.WarnOnViolation ? "✅ " : "❌ ") + (fa ? "اخطار به فرستنده" : "Warn the sender"), context, Id, "warn") });
+        rows.Add(PanelButtons.Header(fa ? "⚠️ فرستنده‌ی محتوای قفل‌شده" : "⚠️ Sender of locked content"));
+        rows.Add(new[] { PanelButtons.Toggle(fa ? "اخطار بگیرد" : "Gets a warning", s.WarnOnViolation, context, Id, "warn") });
         rows.Add(new[] { PanelButtons.BackToGroup(context) });
 
         return new PanelView(context.T(Text).Replace("{0}", s.WarnOnViolation ? "✅" : "❌"), new InlineKeyboardMarkup(rows));

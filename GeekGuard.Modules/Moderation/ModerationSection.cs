@@ -55,40 +55,40 @@ public sealed class ModerationSection(PluginStateStore states) : IPanelSection
 
         var rows = new List<InlineKeyboardButton[]>
         {
+            PanelButtons.Header(fa ? "📊 سقف اخطار" : "📊 Warning limit"),
             new[]
             {
                 PanelButtons.Action("➖", context, Id, "wl", "-"),
-                PanelButtons.Open((fa ? "سقف اخطار: " : "Limit: ") + s.WarnLimit, context.ChatId, Id),
+                PanelButtons.Open(s.WarnLimit.ToString(), context.ChatId, Id),
                 PanelButtons.Action("➕", context, Id, "wl", "+"),
             },
+            PanelButtons.Header(fa ? "⚖️ مجازات در سقف اخطار" : "⚖️ Penalty at the limit"),
             new[]
             {
-                PanelButtons.Action(PanelButtons.Mark(s.ActionAtLimit == LimitAction.Mute, fa ? "🔇 سکوت" : "🔇 Mute"), context, Id, "act", "mute"),
-                PanelButtons.Action(PanelButtons.Mark(s.ActionAtLimit == LimitAction.Kick, fa ? "👢 اخراج" : "👢 Kick"), context, Id, "act", "kick"),
-                PanelButtons.Action(PanelButtons.Mark(s.ActionAtLimit == LimitAction.Ban, fa ? "⛔ بن" : "⛔ Ban"), context, Id, "act", "ban"),
+                PanelButtons.Choice(fa ? "🔇 سکوت" : "🔇 Mute", s.ActionAtLimit == LimitAction.Mute, context, Id, "act", "mute"),
+                PanelButtons.Choice(fa ? "👢 اخراج" : "👢 Kick", s.ActionAtLimit == LimitAction.Kick, context, Id, "act", "kick"),
+                PanelButtons.Choice(fa ? "⛔ بن" : "⛔ Ban", s.ActionAtLimit == LimitAction.Ban, context, Id, "act", "ban"),
             },
         };
 
         if (s.ActionAtLimit == LimitAction.Mute)
         {
+            rows.Add(PanelButtons.Header(fa ? "⏱ مدت سکوت" : "⏱ Mute length"));
             rows.Add(MuteHourChoices
-                .Select(h => PanelButtons.Action(PanelButtons.Mark(s.MuteHoursAtLimit == h, Duration.Format(TimeSpan.FromHours(h), lang)),
-                    context, Id, "mh", h.ToString()))
+                .Select(h => PanelButtons.Choice(Duration.Format(TimeSpan.FromHours(h), lang), s.MuteHoursAtLimit == h, context, Id, "mh", h.ToString()))
                 .ToArray());
         }
 
+        rows.Add(PanelButtons.Header(fa ? "⏳ صفر شدن اخطارها بعد از" : "⏳ Warnings reset after"));
         rows.Add(ExpiryChoices
-            .Select(d => PanelButtons.Action(PanelButtons.Mark(s.WarnExpiryDays == d, "⏳ " + Expiry(d, lang)), context, Id, "exp", d.ToString()))
+            .Select(d => PanelButtons.Choice(Expiry(d, lang), s.WarnExpiryDays == d, context, Id, "exp", d.ToString()))
             .ToArray());
+        rows.Add(PanelButtons.Header(fa ? "🧹 پاک شدن دستور و جواب ربات بعد از" : "🧹 Remove command and reply after"));
         rows.Add(CleanupChoices
-            .Select(c => PanelButtons.Action(PanelButtons.Mark(s.CleanupDelaySeconds == c, "🧹 " + Duration.Format(TimeSpan.FromSeconds(c), lang)),
-                context, Id, "cl", c.ToString()))
+            .Select(c => PanelButtons.Choice(Duration.Format(TimeSpan.FromSeconds(c), lang), s.CleanupDelaySeconds == c, context, Id, "cl", c.ToString()))
             .ToArray());
-        rows.Add(new[]
-        {
-            PanelButtons.Action((s.DeleteOffendingMessage ? "✅ " : "❌ ") + (fa ? "پاک شدن پیام متخلف" : "Remove offending message"),
-                context, Id, "del"),
-        });
+        rows.Add(PanelButtons.Header(fa ? "🗑 پیام متخلف" : "🗑 Offending message"));
+        rows.Add(new[] { PanelButtons.Toggle(fa ? "هنگام مجازات پاک شود" : "Remove it on a penalty", s.DeleteOffendingMessage, context, Id, "del") });
         rows.Add(new[] { PanelButtons.BackToGroup(context) });
         return new PanelView(html, new InlineKeyboardMarkup(rows));
     }

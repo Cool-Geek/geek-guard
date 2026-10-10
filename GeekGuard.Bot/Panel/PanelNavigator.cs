@@ -94,6 +94,11 @@ public sealed class PanelNavigator(
 
         switch (args[0])
         {
+            case "n":
+                // A title row: nothing to do.
+                await actions.AnswerButtonAsync(query.Id, ct: ct);
+                return;
+
             case "l":
                 lang = lang == Languages.English ? Languages.Persian : Languages.English;
                 await users.SetLangAsync(user.Id, lang, ct);

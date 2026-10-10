@@ -108,18 +108,50 @@ public static class PanelButtons
         InlineKeyboardButton.WithCallbackData(context.Lang == Languages.English ? "🔙 Back" : "🔙 بازگشت",
             Data("g", context.ChatId.ToString()));
 
-    /// <summary>Switches the section's whole plugin on or off.</summary>
+    /// <summary>Switches the section's whole plugin on or off: green when on, red when off.</summary>
     public static InlineKeyboardButton PluginSwitch(PanelContext context, string sectionId)
     {
         var fa = context.Lang != Languages.English;
         var text = context.PluginEnabled
             ? (fa ? "✅ روشن — زدن برای خاموش کردن" : "✅ On — tap to turn off")
             : (fa ? "❌ خاموش — زدن برای روشن کردن" : "❌ Off — tap to turn on");
-        return InlineKeyboardButton.WithCallbackData(text, Data("t", context.ChatId.ToString(), sectionId));
+        return Styled(InlineKeyboardButton.WithCallbackData(text, Data("t", context.ChatId.ToString(), sectionId)),
+            context.PluginEnabled ? KeyboardButtonStyle.Success : KeyboardButtonStyle.Danger);
     }
+
+    /// <summary>
+    /// One option of a group of choices (a level, a duration…). The chosen one is green and ticked: the colour for
+    /// current Telegram apps, the tick for older ones that show every button the same.
+    /// </summary>
+    public static InlineKeyboardButton Choice(string text, bool chosen, PanelContext context, string sectionId, params string[] args) =>
+        Styled(Action(chosen ? "✅ " + text : text, context, sectionId, args), chosen ? KeyboardButtonStyle.Success : null);
+
+    /// <summary>A yes/no setting: green with ✅ when on, plain with ❌ when off.</summary>
+    public static InlineKeyboardButton Toggle(string text, bool on, PanelContext context, string sectionId, params string[] args) =>
+        Styled(Action((on ? "✅ " : "❌ ") + text, context, sectionId, args), on ? KeyboardButtonStyle.Success : null);
+
+    /// <summary>An action that removes something (delete all, remove rules): red.</summary>
+    public static InlineKeyboardButton Danger(string text, PanelContext context, string sectionId, params string[] args) =>
+        Styled(Action(text, context, sectionId, args), KeyboardButtonStyle.Danger);
+
+    /// <summary>The main action of a screen (write a text, add words): blue.</summary>
+    public static InlineKeyboardButton Primary(InlineKeyboardButton button) => Styled(button, KeyboardButtonStyle.Primary);
+
+    /// <summary>
+    /// A title row above a group of buttons («⏱ مدت سکوت»), so it is clear which buttons belong to which setting.
+    /// Pressing it does nothing.
+    /// </summary>
+    public static InlineKeyboardButton[] Header(string text) =>
+        [InlineKeyboardButton.WithCallbackData($"┈┈ {text} ┈┈", Data("n"))];
 
     /// <summary>"✅ " in front of the option that is currently chosen.</summary>
     public static string Mark(bool chosen, string text) => chosen ? "✅ " + text : text;
+
+    private static InlineKeyboardButton Styled(InlineKeyboardButton button, KeyboardButtonStyle? style)
+    {
+        button.Style = style;
+        return button;
+    }
 
     public static string Data(params string[] parts) =>
         Prefix + ":" + string.Join(':', parts.Where(p => p.Length > 0));

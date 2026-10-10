@@ -38,13 +38,20 @@ public sealed class WordFilterSection(PluginStateStore states) : IPanelSection, 
             .Replace("{2}", list); // last: the words themselves may contain "{3}"
 
         // The index identifies the word; it is checked against the word's text when pressed (see HandleAsync).
-        var rows = s.Words
-            .Select((word, index) => PanelButtons.Action("🗑 " + Html.Truncate(word, 20), context, Id, "rm", index.ToString(), Fingerprint(word)))
-            .Chunk(2)
-            .ToList();
-        rows.Add(new[] { PanelButtons.AskText(fa ? "➕ افزودن کلمه" : "➕ Add words", context, Id, "add") });
-        if (s.Words.Count > 0) rows.Add(new[] { PanelButtons.Action(fa ? "🗑 حذف همه" : "🗑 Remove all", context, Id, "clear") });
-        rows.Add(new[] { PanelButtons.Action((s.WarnOnViolation ? "✅ " : "❌ ") + (fa ? "اخطار به فرستنده" : "Warn the sender"), context, Id, "warn") });
+        var rows = new List<InlineKeyboardButton[]>
+        {
+            new[] { PanelButtons.Primary(PanelButtons.AskText(fa ? "➕ افزودن کلمه" : "➕ Add words", context, Id, "add")) },
+        };
+        if (s.Words.Count > 0)
+        {
+            rows.Add(PanelButtons.Header(fa ? "🗑 برای حذف، روی کلمه بزن" : "🗑 Tap a word to remove it"));
+            rows.AddRange(s.Words
+                .Select((word, index) => PanelButtons.Action("🗑 " + Html.Truncate(word, 20), context, Id, "rm", index.ToString(), Fingerprint(word)))
+                .Chunk(2));
+            rows.Add(new[] { PanelButtons.Danger(fa ? "🗑 حذف همه" : "🗑 Remove all", context, Id, "clear") });
+        }
+        rows.Add(PanelButtons.Header(fa ? "⚠️ فرستنده‌ی کلمه" : "⚠️ Sender of a banned word"));
+        rows.Add(new[] { PanelButtons.Toggle(fa ? "اخطار بگیرد" : "Gets a warning", s.WarnOnViolation, context, Id, "warn") });
         rows.Add(new[] { PanelButtons.BackToGroup(context) });
         return new PanelView(html, new InlineKeyboardMarkup(rows));
     }

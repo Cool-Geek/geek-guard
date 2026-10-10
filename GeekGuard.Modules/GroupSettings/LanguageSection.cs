@@ -29,8 +29,8 @@ public sealed class LanguageSection(GroupDirectory groups) : IPanelSection
         {
             new[]
             {
-                PanelButtons.Action(PanelButtons.Mark(current == Languages.Persian, "فارسی"), context, Id, Languages.Persian),
-                PanelButtons.Action(PanelButtons.Mark(current == Languages.English, "English"), context, Id, Languages.English),
+                PanelButtons.Choice("فارسی", current == Languages.Persian, context, Id, Languages.Persian),
+                PanelButtons.Choice("English", current == Languages.English, context, Id, Languages.English),
             },
             new[] { PanelButtons.BackToGroup(context) },
         });

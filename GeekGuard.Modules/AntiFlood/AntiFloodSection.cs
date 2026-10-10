@@ -30,11 +30,14 @@ public sealed class AntiFloodSection(PluginStateStore states) : IPanelSection
         var lang = context.Lang;
         var muteFor = TimeSpan.FromMinutes(s.MuteMinutes);
 
+        var fa = lang != Languages.English;
         var rows = new List<InlineKeyboardButton[]>
         {
+            PanelButtons.Header(fa ? "📶 حساسیت" : "📶 Sensitivity"),
             new[] { FloodLevel.Off, FloodLevel.Low }.Select(l => LevelButton(context, s, l)).ToArray(),
             new[] { FloodLevel.Medium, FloodLevel.Strict }.Select(l => LevelButton(context, s, l)).ToArray(),
-            MuteChoices.Select(m => PanelButtons.Action(PanelButtons.Mark(s.MuteMinutes == m, "🔇 " + Duration.Format(TimeSpan.FromMinutes(m), lang)),
+            PanelButtons.Header(fa ? "🔇 مدت سکوت فلودکننده" : "🔇 Mute the flooder for"),
+            MuteChoices.Select(m => PanelButtons.Choice(Duration.Format(TimeSpan.FromMinutes(m), lang), s.MuteMinutes == m,
                 context, Id, "mute", m.ToString())).ToArray(),
             new[] { PanelButtons.BackToGroup(context) },
         };
@@ -58,7 +61,7 @@ public sealed class AntiFloodSection(PluginStateStore states) : IPanelSection
     }
 
     private InlineKeyboardButton LevelButton(PanelContext context, AntiFloodSettings s, FloodLevel level) =>
-        PanelButtons.Action(PanelButtons.Mark(s.Level == level, Describe(level, context.Lang)), context, Id, "lvl", level.ToString());
+        PanelButtons.Choice(Describe(level, context.Lang), s.Level == level, context, Id, "lvl", level.ToString());
 
     private static string Describe(FloodLevel level, string lang)
     {
