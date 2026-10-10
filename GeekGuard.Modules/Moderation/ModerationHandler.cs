@@ -96,7 +96,7 @@ public sealed class ModerationHandler(
         }
 
         var settings = await states.GetSettingsAsync<ModerationSettings>(chatId, ModerationPlugin.Id, ct);
-        var succeeded = await ExecuteAsync(command, chatId, lang, target, settings.CleanupDelay, ct);
+        var succeeded = await ExecuteAsync(command, chatId, lang, target, settings, ct);
 
         // Clean up after the action: the admin's command and (via ExecuteAsync) the bot's reply always go;
         // the member's message goes too when it was punished, since it is usually the reason for the action.
@@ -129,8 +129,9 @@ public sealed class ModerationHandler(
 
     /// <summary>Performs the action and announces it. Returns whether Telegram carried it out.</summary>
     private async Task<bool> ExecuteAsync(ModerationCommand command, long chatId, string lang, User target,
-        TimeSpan cleanup, CancellationToken ct)
+        ModerationSettings settings, CancellationToken ct)
     {
+        var cleanup = settings.CleanupDelay;
         var mention = Html.Mention(target);
         // Penalties show the id too, so they can be undone later without a message to reply to.
         var tagged = Html.MentionWithId(target);
@@ -140,7 +141,7 @@ public sealed class ModerationHandler(
                 return await warnings.WarnAsync(chatId, lang, target, command.Reason, ct);
 
             case ModerationAction.Unwarn:
-                var had = await warns.ResetAsync(chatId, target.Id, ct);
+                var had = await warns.ResetAsync(chatId, target.Id, settings.WarnExpiryDays, ct);
                 await actions.SendTemporaryAsync(chatId,
                     (had > 0 ? ModerationTexts.Unwarned : ModerationTexts.NoWarnings).Format(lang, mention), cleanup, ct: ct);
                 return true;

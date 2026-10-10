@@ -64,6 +64,26 @@ public interface IPanelSection
 }
 
 /// <summary>
+/// A section that also takes typed text (a welcome message, rules, words to filter). A button made with
+/// <see cref="PanelButtons.AskText"/> asks the admin to send the text; their next private message comes here.
+/// </summary>
+public interface IPanelTextInput
+{
+    /// <summary>What the admin is asked, e.g. «متن خوشامد جدید را بفرست».</summary>
+    Localized Prompt(string field);
+
+    /// <summary>
+    /// The admin sent the text (they are allowed to edit; that was checked again). Return Accepted = false with a note
+    /// to ask again (too long, empty…); the admin can also cancel.
+    /// </summary>
+    Task<PanelInputResult> AcceptTextAsync(PanelContext context, string field, string text, CancellationToken ct);
+}
+
+/// <param name="Accepted">The text was used; the section is shown again.</param>
+/// <param name="Note">Shown above the section, or as the reason to try again.</param>
+public sealed record PanelInputResult(bool Accepted, string? Note);
+
+/// <summary>
 /// Button data for the panel. Everything starts with "p:"; group screens carry the chat id, so a button always says
 /// which group it belongs to and the rights are checked again on every press.
 /// </summary>
@@ -78,6 +98,10 @@ public static class PanelButtons
     /// <summary>Opens (or refreshes) a section.</summary>
     public static InlineKeyboardButton Open(string text, long chatId, string sectionId) =>
         InlineKeyboardButton.WithCallbackData(text, Data("s", chatId.ToString(), sectionId));
+
+    /// <summary>A button that asks the admin to type text for <paramref name="field"/>; see <see cref="IPanelTextInput"/>.</summary>
+    public static InlineKeyboardButton AskText(string text, PanelContext context, string sectionId, string field) =>
+        InlineKeyboardButton.WithCallbackData(text, Data("i", context.ChatId.ToString(), sectionId, field));
 
     /// <summary>Back to the group's menu.</summary>
     public static InlineKeyboardButton BackToGroup(PanelContext context) =>

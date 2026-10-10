@@ -22,6 +22,7 @@ public sealed class WordFilterPlugin : IGeekGuardPlugin
         services.TryAddSingleton<ViolationService>();
         services.AddGroupMessageHandler<WordFilterCommandsHandler>();
         services.AddGroupMessageHandler<WordFilterHandler>();
+        services.AddPanelSection<WordFilterSection>();
     }
 }
 
@@ -127,7 +128,7 @@ public sealed class WordFilterCommandsHandler(PluginStateStore states, BotAction
 
         var reply = verb switch
         {
-            Verb.Add when words.Count > 0 => await AddAsync(chatId, lang, settings, words, ct),
+            Verb.Add when words.Count > 0 => await AddAsync(states, chatId, lang, settings, words, ct),
             Verb.Remove when words.Count > 0 => await RemoveAsync(chatId, lang, settings, words, ct),
             _ => ListText(settings, lang),
         };
@@ -135,7 +136,9 @@ public sealed class WordFilterCommandsHandler(PluginStateStore states, BotAction
         return HandlerResult.Stop;
     }
 
-    private async Task<string> AddAsync(long chatId, string lang, WordFilterSettings settings, List<string> words, CancellationToken ct)
+    /// <summary>Adds words to a group's filter (shared with the settings panel). Returns the reply for the admin.</summary>
+    internal static async Task<string> AddAsync(PluginStateStore states, long chatId, string lang, WordFilterSettings settings,
+        List<string> words, CancellationToken ct)
     {
         if (words.Any(w => w.Length > WordFilterSettings.MaxWordLength))
             return TooLong.Format(lang, WordFilterSettings.MaxWordLength);
@@ -180,7 +183,7 @@ public sealed class WordFilterCommandsHandler(PluginStateStore states, BotAction
     }
 
     /// <summary>Banned words are hidden behind a spoiler, so the list itself does not show them to everyone.</summary>
-    private static string Spoilers(IEnumerable<string> words) =>
+    internal static string Spoilers(IEnumerable<string> words) =>
         string.Join("، ", words.Select(w => $"<tg-spoiler>{Html.Escape(w)}</tg-spoiler>"));
 
     /// <summary>What the admin asked for, or null if the message is not a filter command.</summary>
@@ -214,7 +217,7 @@ public sealed class WordFilterCommandsHandler(PluginStateStore states, BotAction
     /// Entries are separated by commas («،» or ",") or new lines. Without separators the whole text is one entry,
     /// so "/filter خیلی بد" bans the phrase, not the short word «بد» on its own.
     /// </summary>
-    private static List<string> SplitWords(string text) =>
+    internal static List<string> SplitWords(string text) =>
         text.Split([',', '،', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(w => Regex.Replace(w, @"\s+", " "))
             .ToList();

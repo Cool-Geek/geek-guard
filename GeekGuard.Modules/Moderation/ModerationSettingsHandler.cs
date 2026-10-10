@@ -57,14 +57,8 @@ public sealed class ModerationSettingsHandler(PluginStateStore states, BotAction
         }
 
         // Settings objects are shared through the cache, so save a changed copy instead of mutating it.
-        var updated = new ModerationSettings
-        {
-            WarnLimit = settings.WarnLimit,
-            ActionAtLimit = settings.ActionAtLimit,
-            MuteHoursAtLimit = settings.MuteHoursAtLimit,
-            DeleteOffendingMessage = settings.DeleteOffendingMessage,
-            CleanupDelaySeconds = seconds.Value,
-        };
+        var updated = settings.Copy();
+        updated.CleanupDelaySeconds = seconds.Value;
         await states.SaveSettingsAsync(chatId, ModerationPlugin.Id, updated, ct);
         await actions.SendTemporaryAsync(chatId, Changed.Format(lang, Duration.Format(updated.CleanupDelay, lang)),
             updated.CleanupDelay, ct: ct);

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using GeekGuard.Core.Callbacks;
 using GeekGuard.Core.Groups;
 using GeekGuard.Core.Messaging;
@@ -15,7 +16,8 @@ namespace GeekGuard.Bot.Panel;
 /// </summary>
 /// <remarks>
 /// Button data: "p:h" home, "p:l" switch the panel's language, "p:g:&lt;chat&gt;" a group's menu,
-/// "p:s:&lt;chat&gt;:&lt;section&gt;[:args]" a section or an action in it, "p:t:&lt;chat&gt;:&lt;section&gt;" the section's on/off switch.
+/// "p:s:&lt;chat&gt;:&lt;section&gt;[:args]" a section or an action in it, "p:t:&lt;chat&gt;:&lt;section&gt;" the section's on/off switch,
+/// "p:i:&lt;chat&gt;:&lt;section&gt;:&lt;field&gt;" ask the admin to type text for a field.
 /// </remarks>
 public sealed class PanelNavigator(
     IEnumerable<IPanelSection> sections,
@@ -27,6 +29,14 @@ public sealed class PanelNavigator(
     BotActions actions,
     BotIdentity me) : ICallbackHandler
 {
+    /// <summary>How long the panel waits for typed text before forgetting the question.</summary>
+    private static readonly TimeSpan InputTimeout = TimeSpan.FromMinutes(10);
+
+    /// <summary>Admins the panel is waiting on for typed text. In memory: after a restart they just tap again.</summary>
+    private readonly ConcurrentDictionary<long, PendingInput> _pending = new();
+
+    private sealed record PendingInput(long ChatId, string SectionId, string Field, int PanelMessageId, DateTime Expires);
+
     private readonly IPanelSection[] _sections = sections.Where(s => catalog.Contains(s.PluginId)).OrderBy(s => s.Order).ToArray();
 
     private static readonly Localized Hello = new(
@@ -49,12 +59,17 @@ public sealed class PanelNavigator(
         "⛔ فقط سازنده و ادمین‌هایی که اجازه‌ی «محدود کردن اعضا» دارند می‌توانند تغییر بدهند.",
         "⛔ Only the owner and admins who may restrict members can change this.");
     private static readonly Localized Saved = new("✅ ذخیره شد", "✅ Saved");
+    private static readonly Localized Cancel = new("❌ لغو", "❌ Cancel");
+    private static readonly Localized TypeHint = new(
+        "✏️ {0}\n\n<i>پیامت را همین‌جا بفرست، یا «لغو» را بزن.</i>",
+        "✏️ {0}\n\n<i>Send it here as a message, or tap Cancel.</i>");
 
     public string Prefix => PanelButtons.Prefix;
 
     /// <summary>Sends the panel's home screen as a new message (for /start in the private chat).</summary>
     public async Task ShowHomeAsync(long chatId, User user, CancellationToken ct)
     {
+        _pending.TryRemove(user.Id, out _);
         var (html, keyboard) = await HomeAsync(user, ct);
         await actions.SendAsync(chatId, html, keyboard: keyboard, ct: ct);
     }
@@ -70,6 +85,9 @@ public sealed class PanelNavigator(
 
         var user = query.From;
         var lang = await UserLangAsync(user, ct);
+
+        // Any other press means the admin moved on: stop waiting for typed text.
+        if (args[0] != "i") _pending.TryRemove(user.Id, out _);
         string? note = null;
         PanelView? view;
 
@@ -85,6 +103,22 @@ public sealed class PanelNavigator(
                 var menuContext = await ContextAsync(menuChat, user.Id, lang, null, ct);
                 if (menuContext is null) { await RefuseAsync(query, NotAdmin, lang, user, panel, ct); return; }
                 view = GroupMenu(menuContext);
+                break;
+
+            case "i" when args.Length == 4 && long.TryParse(args[1], out var inputChat)
+                          && _sections.FirstOrDefault(s => s.Id == args[2]) is { } inputSection
+                          && inputSection is IPanelTextInput input:
+                var inputContext = await ContextAsync(inputChat, user.Id, lang, inputSection, ct);
+                if (inputContext is null) { await RefuseAsync(query, NotAdmin, lang, user, panel, ct); return; }
+                if (!inputContext.CanEdit)
+                {
+                    await actions.AnswerButtonAsync(query.Id, CannotEdit.Get(lang), alert: true, ct);
+                    return;
+                }
+
+                _pending[user.Id] = new PendingInput(inputChat, inputSection.Id, args[3], panel.MessageId, DateTime.UtcNow + InputTimeout);
+                view = new PanelView(TypeHint.Format(lang, input.Prompt(args[3]).Get(lang)), new InlineKeyboardMarkup(
+                    PanelButtons.Open(Cancel.Get(lang), inputChat, inputSection.Id)));
                 break;
 
             case "s" or "t" when args.Length >= 3 && long.TryParse(args[1], out var chatId)
@@ -121,6 +155,47 @@ public sealed class PanelNavigator(
 
         await actions.AnswerButtonAsync(query.Id, note, ct: ct);
         await actions.EditAsync(panel.Chat.Id, panel.MessageId, view.Html, view.Keyboard, ct);
+    }
+
+    /// <summary>
+    /// A private message from an admin the panel asked for text. Returns false when nobody asked, so the message
+    /// is treated as ordinary chat.
+    /// </summary>
+    public async Task<bool> TryAcceptTextAsync(Message message, CancellationToken ct)
+    {
+        if (message is not { From: { } user, Text: { } text } || !_pending.TryGetValue(user.Id, out var pending)) return false;
+        if (pending.Expires < DateTime.UtcNow)
+        {
+            _pending.TryRemove(user.Id, out _);
+            return false;
+        }
+
+        var lang = await UserLangAsync(user, ct);
+        var section = _sections.First(s => s.Id == pending.SectionId);
+        var context = await ContextAsync(pending.ChatId, user.Id, lang, section, ct);
+        if (context is not { CanEdit: true })
+        {
+            _pending.TryRemove(user.Id, out _);
+            await actions.SendAsync(message.Chat.Id, (context is null ? NotAdmin : CannotEdit).Get(lang), ct: ct);
+            return true;
+        }
+
+        var result = await ((IPanelTextInput)section).AcceptTextAsync(context, pending.Field, text.Trim(), ct);
+        if (!result.Accepted)
+        {
+            // Still waiting: the admin can send a better text or cancel.
+            await actions.SendAsync(message.Chat.Id, result.Note ?? "⚠️", ct: ct);
+            return true;
+        }
+
+        _pending.TryRemove(user.Id, out _);
+
+        // The old panel is now above the admin's message; replace it with a fresh one below.
+        await actions.DeleteAsync(message.Chat.Id, pending.PanelMessageId, ct);
+        var view = await section.ShowAsync(context, ct);
+        var html = string.IsNullOrEmpty(result.Note) ? view.Html : $"{result.Note}\n\n{view.Html}";
+        await actions.SendAsync(message.Chat.Id, html, keyboard: view.Keyboard, ct: ct);
+        return true;
     }
 
     private async Task<PanelView> HomeAsync(User user, CancellationToken ct)

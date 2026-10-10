@@ -20,6 +20,7 @@ public sealed class WelcomePlugin : IGeekGuardPlugin
         services.AddSingleton<LastWelcomes>();
         services.AddGroupMessageHandler<WelcomeHandler>();
         services.AddGroupMessageHandler<WelcomeCommandsHandler>();
+        services.AddPanelSection<WelcomeSection>();
     }
 }
 

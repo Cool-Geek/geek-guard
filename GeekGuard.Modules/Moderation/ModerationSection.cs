@@ -11,16 +11,19 @@ public sealed class ModerationSection(PluginStateStore states) : IPanelSection
         "⚠️ <b>اخطار و مجازات</b>\n\n" +
         "سقف اخطار: <b>{0}</b>\n" +
         "در سقف اخطار: <b>{1}</b>\n" +
+        "صفر شدن اخطارها اگر کسی این مدت اخطار جدید نگیرد: <b>{4}</b>\n" +
         "پاک شدن دستور ادمین و جواب ربات بعد از: <b>{2}</b>\n" +
         "پاک شدن پیام متخلف هنگام مجازات: <b>{3}</b>",
         "⚠️ <b>Warnings & penalties</b>\n\n" +
         "Warning limit: <b>{0}</b>\n" +
         "At the limit: <b>{1}</b>\n" +
+        "Warnings reset after this long without a new one: <b>{4}</b>\n" +
         "Admin command and bot reply removed after: <b>{2}</b>\n" +
         "Remove the offending message on a penalty: <b>{3}</b>");
 
     private static readonly int[] MuteHourChoices = [1, 6, 24, 72, 168];
     private static readonly int[] CleanupChoices = [10, 30, 60, 300];
+    private static readonly int[] ExpiryChoices = [0, 7, 30, 90];
 
     public string Id => "mod";
 
@@ -47,7 +50,8 @@ public sealed class ModerationSection(PluginStateStore states) : IPanelSection
         var html = context.T(Text).Replace("{0}", s.WarnLimit.ToString())
             .Replace("{1}", penalty)
             .Replace("{2}", Duration.Format(s.CleanupDelay, lang))
-            .Replace("{3}", s.DeleteOffendingMessage ? "✅" : "❌");
+            .Replace("{3}", s.DeleteOffendingMessage ? "✅" : "❌")
+            .Replace("{4}", Expiry(s.WarnExpiryDays, lang));
 
         var rows = new List<InlineKeyboardButton[]>
         {
@@ -73,6 +77,9 @@ public sealed class ModerationSection(PluginStateStore states) : IPanelSection
                 .ToArray());
         }
 
+        rows.Add(ExpiryChoices
+            .Select(d => PanelButtons.Action(PanelButtons.Mark(s.WarnExpiryDays == d, "⏳ " + Expiry(d, lang)), context, Id, "exp", d.ToString()))
+            .ToArray());
         rows.Add(CleanupChoices
             .Select(c => PanelButtons.Action(PanelButtons.Mark(s.CleanupDelaySeconds == c, "🧹 " + Duration.Format(TimeSpan.FromSeconds(c), lang)),
                 context, Id, "cl", c.ToString()))
@@ -86,17 +93,13 @@ public sealed class ModerationSection(PluginStateStore states) : IPanelSection
         return new PanelView(html, new InlineKeyboardMarkup(rows));
     }
 
+    private static string Expiry(int days, string lang) =>
+        days == 0 ? (lang == Languages.English ? "never" : "هیچ‌وقت") : Duration.Format(TimeSpan.FromDays(days), lang);
+
     public async Task<string?> HandleAsync(PanelContext context, string[] args, CancellationToken ct)
     {
         var s = await states.GetSettingsAsync<ModerationSettings>(context.ChatId, ModerationPlugin.Id, ct);
-        var updated = new ModerationSettings
-        {
-            WarnLimit = s.WarnLimit,
-            ActionAtLimit = s.ActionAtLimit,
-            MuteHoursAtLimit = s.MuteHoursAtLimit,
-            CleanupDelaySeconds = s.CleanupDelaySeconds,
-            DeleteOffendingMessage = s.DeleteOffendingMessage,
-        };
+        var updated = s.Copy();
 
         var value = args.Length > 1 ? args[1] : "";
         switch (args[0])
@@ -112,6 +115,9 @@ public sealed class ModerationSection(PluginStateStore states) : IPanelSection
                 break;
             case "cl" when int.TryParse(value, out var seconds) && CleanupChoices.Contains(seconds):
                 updated.CleanupDelaySeconds = seconds;
+                break;
+            case "exp" when int.TryParse(value, out var days) && ExpiryChoices.Contains(days):
+                updated.WarnExpiryDays = days;
                 break;
             case "del":
                 updated.DeleteOffendingMessage = !s.DeleteOffendingMessage;

@@ -14,7 +14,7 @@ public sealed class WarningService(WarnStore warns, PluginStateStore states, Bot
     public async Task<bool> WarnAsync(long chatId, string lang, User member, string? reason, CancellationToken ct)
     {
         var settings = await states.GetSettingsAsync<ModerationSettings>(chatId, ModerationPlugin.Id, ct);
-        var count = await warns.AddAsync(chatId, member.Id, ct);
+        var count = await warns.AddAsync(chatId, member.Id, settings.WarnExpiryDays, ct);
         var mention = Html.Mention(member);
 
         if (count < settings.WarnLimit)
@@ -25,7 +25,7 @@ public sealed class WarningService(WarnStore warns, PluginStateStore states, Bot
             return true;
         }
 
-        await warns.ResetAsync(chatId, member.Id, ct);
+        await warns.ResetAsync(chatId, member.Id, ct: ct);
 
         var limit = settings.WarnLimit;
         mention = Html.MentionWithId(member); // the penalty may need undoing later

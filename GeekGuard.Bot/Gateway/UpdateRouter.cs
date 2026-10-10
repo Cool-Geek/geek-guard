@@ -42,8 +42,16 @@ public sealed class UpdateRouter(
     /// <summary>Private chat: /start opens the settings panel; /start with a link parameter goes to its plugin.</summary>
     private async Task HandlePrivateMessageAsync(Message message, CancellationToken ct)
     {
-        if (message is not { Text: { } text, From: { } from } || !text.StartsWith("/start", StringComparison.Ordinal))
+        if (message is not { Text: { } text, From: { } from }) return;
+
+        // Text the panel asked for (a welcome message, rules, a word to filter).
+        if (!text.StartsWith('/'))
+        {
+            await panel.TryAcceptTextAsync(message, ct);
             return;
+        }
+
+        if (!text.StartsWith("/start", StringComparison.Ordinal) && !text.StartsWith("/cancel", StringComparison.Ordinal)) return;
 
         await users.UpsertAsync(from.Id, from.FirstName, from.Username, from.LanguageCode, ct);
 

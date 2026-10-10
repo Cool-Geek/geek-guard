@@ -24,6 +24,7 @@ public sealed class RulesPlugin : IGeekGuardPlugin
     {
         services.AddGroupMessageHandler<RulesCommandsHandler>();
         services.AddStartLinkHandler<RulesLinkHandler>();
+        services.AddPanelSection<RulesSection>();
     }
 
     /// <summary>The "📜 Rules" button, opening the rules in a private chat.</summary>

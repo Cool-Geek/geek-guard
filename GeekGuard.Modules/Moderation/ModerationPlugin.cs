@@ -52,6 +52,18 @@ public sealed class ModerationSettings
     /// <summary>Also delete the member's message the admin replied to, when the action is a punishment.</summary>
     public bool DeleteOffendingMessage { get; set; } = true;
 
+    /// <summary>
+    /// A member's warnings start again from zero once they have had no new warning for this many days.
+    /// 0: warnings never expire.
+    /// </summary>
+    public int WarnExpiryDays { get; set; } = 30;
+
+    /// <summary>
+    /// A copy to change and save. Cached settings are shared, so they are never changed in place; copying every
+    /// field here means a new setting can never be dropped by a caller that forgot it.
+    /// </summary>
+    public ModerationSettings Copy() => (ModerationSettings)MemberwiseClone();
+
     public const int DefaultCleanupSeconds = 30;
     public const int MinCleanupSeconds = 5;
     public const int MaxCleanupSeconds = 86_400;
