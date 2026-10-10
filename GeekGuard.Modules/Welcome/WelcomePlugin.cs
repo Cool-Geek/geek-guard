@@ -40,6 +40,15 @@ public sealed class WelcomeSettings
     /// <summary>Remove the previous welcome when a new one is posted.</summary>
     public bool DeletePrevious { get; set; } = true;
 
+    /// <summary>Minutes a welcome stays before it removes itself.</summary>
+    public int DeleteAfterMinutes { get; set; } = 5;
+
+    /// <summary>Choices offered in the panel.</summary>
+    public static readonly int[] DeleteAfterChoices = [1, 5, 15, 60];
+
+    /// <summary>A copy to change and save (cached settings are shared and never changed in place).</summary>
+    public WelcomeSettings Copy() => (WelcomeSettings)MemberwiseClone();
+
     public static readonly Localized DefaultText = new(
         "👋 {name} عزیز، به «{group}» خوش اومدی!",
         "👋 Welcome to “{group}”, {name}!");
@@ -102,6 +111,8 @@ public sealed class WelcomeHandler(
         var keyboard = rules.Text.Length > 0 ? RulesPlugin.Button(me.Username, chatId, lang) : null;
 
         var sent = await actions.SendAsync(chatId, text, keyboard: keyboard, ct: ct);
+        if (sent is not null)
+            actions.ScheduleDelete(chatId, sent.MessageId, TimeSpan.FromMinutes(Math.Clamp(settings.DeleteAfterMinutes, 1, 1440)));
         if (sent is not null && lastWelcomes.Swap(chatId, sent.MessageId) is { } previous && settings.DeletePrevious)
             await actions.DeleteAsync(chatId, previous, ct);
 
@@ -197,12 +208,13 @@ public sealed class WelcomeCommandsHandler(PluginStateStore states, BotActions a
         return HandlerResult.Stop;
     }
 
-    private static WelcomeSettings Copy(WelcomeSettings s, string? text = null, bool? enabled = null) => new()
+    private static WelcomeSettings Copy(WelcomeSettings s, string? text = null, bool? enabled = null)
     {
-        Text = text ?? s.Text,
-        Enabled = enabled ?? s.Enabled,
-        DeletePrevious = s.DeletePrevious,
-    };
+        var copy = s.Copy();
+        copy.Text = text ?? s.Text;
+        copy.Enabled = enabled ?? s.Enabled;
+        return copy;
+    }
 
     private static (Verb Verb, string Text)? ReadRequest(GroupMessageContext context)
     {

@@ -41,7 +41,7 @@ public static class HelpTopics
             <b>چند نکته</b>
             • هر دستور هم با / کار می‌کند و هم با کلمه‌ی فارسی؛ مثلاً <code>/ban</code> یا «بن».
             • دستورها فقط برای ادمین‌هاست. اگر عضو عادی دستوری بنویسد، ربات هیچ واکنشی نشان نمی‌دهد.
-            • دستور ادمین و جواب ربات بعد از چند ثانیه خودشان پاک می‌شوند تا گروه شلوغ نشود.
+            • هیچ پیامی از ربات در گروه نمی‌ماند: جواب‌ها، هشدارها و خوشامد خودشان پاک می‌شوند، و دستورهای ادمین هم همین‌طور.
             • 🆓 یعنی رایگان و 💎 یعنی نسخه‌ی Pro.
             """,
             """
@@ -63,7 +63,7 @@ public static class HelpTopics
             <b>Good to know</b>
             • Every command works with a slash and as a Persian word, e.g. <code>/ban</code> or «بن».
             • Commands are for admins only. When a member types one, the bot does not react at all.
-            • The admin's command and the bot's reply delete themselves after a few seconds, keeping the chat tidy.
+            • Nothing the bot posts stays in the group: replies, notices and welcomes remove themselves, and so do admins' commands.
             • 🆓 means free, 💎 means Pro.
             """));
 
@@ -265,7 +265,7 @@ public static class HelpTopics
         new(
             """
             <b>👋 خوشامدگویی</b>
-            به هر کسی که وارد شود خوشامد می‌گوید. فقط آخرین خوشامد در گروه می‌ماند تا ورود چند نفر گروه را پر نکند.
+            به هر کسی که وارد شود خوشامد می‌گوید. فقط آخرین خوشامد در گروه می‌ماند و خودش هم بعد از ۵ دقیقه پاک می‌شود (در پنل قابل تغییر).
             • «خوشامد» یا <code>/welcome</code>: وضعیت و پیش‌نمایش
             • «تنظیم خوشامد» و بعد متن (یا ریپلای روی پیام متن)؛ می‌توانی از <code>{name}</code> و <code>{group}</code> و <code>{count}</code> استفاده کنی
             • «خوشامد روشن» / «خوشامد خاموش» — «خوشامد پیش‌فرض»
@@ -280,7 +280,7 @@ public static class HelpTopics
             """,
             """
             <b>👋 Welcome</b>
-            Greets everyone who joins. Only the latest welcome stays, so a wave of joins never fills the chat.
+            Greets everyone who joins. Only the latest welcome stays, and it removes itself after 5 minutes (change it in the panel).
             • <code>/welcome</code>: status and preview
             • <code>/setwelcome text</code> (or reply to a message holding it); use <code>{name}</code>, <code>{group}</code>, <code>{count}</code>
             • <code>/welcome on</code>, <code>/welcome off</code>, <code>/resetwelcome</code>

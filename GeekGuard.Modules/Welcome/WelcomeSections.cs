@@ -1,5 +1,6 @@
 using GeekGuard.Core.Messaging;
 using GeekGuard.Core.Panel;
+using GeekGuard.Modules.Moderation;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -53,8 +54,12 @@ public sealed class WelcomeSection(PluginStateStore states) : IPanelSection, IPa
                 PanelButtons.Primary(PanelButtons.AskText(fa ? "✏️ ویرایش متن" : "✏️ Edit text", context, Id, "text")),
                 PanelButtons.Action(fa ? "↩️ متن پیش‌فرض" : "↩️ Default text", context, Id, "reset"),
             },
+            PanelButtons.Header(fa ? "⏱ پاک شدن خوشامد بعد از" : "⏱ Remove the welcome after"),
+            WelcomeSettings.DeleteAfterChoices
+                .Select(m => PanelButtons.Choice(Duration.Format(TimeSpan.FromMinutes(m), context.Lang), s.DeleteAfterMinutes == m, context, Id, "life", m.ToString()))
+                .ToArray(),
             PanelButtons.Header(fa ? "🧹 خوشامدهای قبلی" : "🧹 Older welcomes"),
-            new[] { PanelButtons.Toggle(fa ? "فقط آخرین خوشامد بماند" : "Keep only the latest", s.DeletePrevious, context, Id, "prev") },
+            new[] { PanelButtons.Toggle(fa ? "با ورود نفر بعد پاک شود" : "Remove when someone else joins", s.DeletePrevious, context, Id, "prev") },
             new[] { PanelButtons.BackToGroup(context) },
         });
         return new PanelView(html, keyboard);
@@ -63,10 +68,13 @@ public sealed class WelcomeSection(PluginStateStore states) : IPanelSection, IPa
     public async Task<string?> HandleAsync(PanelContext context, string[] args, CancellationToken ct)
     {
         var s = await states.GetSettingsAsync<WelcomeSettings>(context.ChatId, WelcomePlugin.Id, ct);
-        var updated = new WelcomeSettings { Enabled = s.Enabled, Text = s.Text, DeletePrevious = s.DeletePrevious };
+        var updated = s.Copy();
         switch (args[0])
         {
             case "on": updated.Enabled = !s.Enabled; break;
+            case "life" when args.Length > 1 && int.TryParse(args[1], out var minutes) && WelcomeSettings.DeleteAfterChoices.Contains(minutes):
+                updated.DeleteAfterMinutes = minutes;
+                break;
             case "reset": updated.Text = ""; break;
             case "prev": updated.DeletePrevious = !s.DeletePrevious; break;
             default: return null;
@@ -77,6 +85,14 @@ public sealed class WelcomeSection(PluginStateStore states) : IPanelSection, IPa
 
     public Localized Prompt(string field) => Ask;
 
+    private static WelcomeSettings CopyWith(WelcomeSettings s, string text)
+    {
+        var copy = s.Copy();
+        copy.Text = text;
+        copy.Enabled = true;
+        return copy;
+    }
+
     public async Task<PanelInputResult> AcceptTextAsync(PanelContext context, string field, string text, CancellationToken ct)
     {
         if (text.Length == 0) return new PanelInputResult(false, context.T(Ask));
@@ -85,7 +101,7 @@ public sealed class WelcomeSection(PluginStateStore states) : IPanelSection, IPa
         var s = await states.GetSettingsAsync<WelcomeSettings>(context.ChatId, WelcomePlugin.Id, ct);
         // Writing a welcome also switches it on: that is clearly what the admin wants.
         await states.SaveSettingsAsync(context.ChatId, WelcomePlugin.Id,
-            new WelcomeSettings { Enabled = true, Text = text, DeletePrevious = s.DeletePrevious }, ct);
+            CopyWith(s, text), ct);
         return new PanelInputResult(true, context.T(SavedNote));
     }
 }

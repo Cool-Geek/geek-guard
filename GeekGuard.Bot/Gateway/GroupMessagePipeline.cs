@@ -17,11 +17,15 @@ public sealed class GroupMessagePipeline
     private readonly GroupDirectory _groups;
     private readonly GroupAdmins _admins;
     private readonly MemberDirectory _members;
+    private readonly BotActions _actions;
+
+    /// <summary>How long an answered command stays when its handler did not say.</summary>
+    private static readonly TimeSpan CommandLifetime = TimeSpan.FromSeconds(30);
     private readonly BotIdentity _me;
     private readonly ILogger<GroupMessagePipeline> _log;
 
     public GroupMessagePipeline(IEnumerable<IGroupMessageHandler> handlers, PluginCatalog catalog,
-        PluginStateStore states, GroupDirectory groups, GroupAdmins admins, MemberDirectory members, BotIdentity me, ILogger<GroupMessagePipeline> log)
+        PluginStateStore states, GroupDirectory groups, GroupAdmins admins, MemberDirectory members, BotActions actions, BotIdentity me, ILogger<GroupMessagePipeline> log)
     {
         // Resolving manifests here makes a handler with a wrong PluginId fail at startup, not on the first message.
         _handlers = handlers
@@ -32,6 +36,7 @@ public sealed class GroupMessagePipeline
         _groups = groups;
         _admins = admins;
         _members = members;
+        _actions = actions;
         _me = me;
         _log = log;
     }
@@ -62,6 +67,11 @@ public sealed class GroupMessagePipeline
 
             if (await handler.HandleAsync(context, ct) == HandlerResult.Stop)
             {
+                // A command the bot answered never stays in the chat, whatever path the handler took
+                // (hints, refusals…). Handlers that set their own timing keep it.
+                if (handler.Order < HandlerOrder.Membership && !_actions.IsScheduled(chat.Id, message.MessageId))
+                    _actions.ScheduleDelete(chat.Id, message.MessageId, CommandLifetime);
+
                 _log.LogDebug("Message {MessageId} in {Chat} stopped by {Plugin}", message.MessageId, chat.Id, plugin.Id);
                 return;
             }

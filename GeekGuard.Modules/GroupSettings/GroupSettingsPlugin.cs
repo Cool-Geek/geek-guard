@@ -43,12 +43,12 @@ public sealed class LanguageHandler(GroupDirectory groups, BotActions actions) :
 
         if (requested == "")
         {
-            await actions.SendAsync(context.ChatId, Usage.Get(context.Group.Lang), context.Message.MessageId, ct: ct);
+            await actions.SendTemporaryAsync(context.ChatId, Usage.Get(context.Group.Lang), TimeSpan.FromSeconds(30), context.Message.MessageId, ct);
             return HandlerResult.Stop;
         }
 
         await groups.SetLangAsync(context.ChatId, requested, ct);
-        await actions.SendAsync(context.ChatId, Changed.Get(requested), ct: ct);
+        await actions.SendTemporaryAsync(context.ChatId, Changed.Get(requested), TimeSpan.FromSeconds(30), ct: ct);
         return HandlerResult.Stop;
     }
 

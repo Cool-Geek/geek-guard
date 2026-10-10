@@ -65,7 +65,7 @@ public sealed class PingHandler(
             lines.Add($"{(active ? "✅" : "⏸")} {Html.Escape(name)} ({plugin.Tier})");
         }
 
-        await actions.SendAsync(context.ChatId, string.Join('\n', lines), context.Message.MessageId, ct: ct);
+        await actions.SendTemporaryAsync(context.ChatId, string.Join('\n', lines), TimeSpan.FromMinutes(1), context.Message.MessageId, ct);
         return HandlerResult.Stop;
     }
 

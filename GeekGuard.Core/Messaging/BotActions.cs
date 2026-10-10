@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
@@ -14,15 +15,28 @@ public sealed class BotActions(ITelegramBotClient bot, ILogger<BotActions> log)
 {
     private static readonly LinkPreviewOptions NoPreview = new() { IsDisabled = true };
 
+    /// <summary>
+    /// Nothing the bot posts in a group stays for good: a message nobody scheduled a shorter life for is removed
+    /// after this long. Private chats (the panel, reports to admins) are left alone.
+    /// </summary>
+    public static readonly TimeSpan GroupMessageLifetime = TimeSpan.FromMinutes(5);
+
+    /// <summary>Pending deletions, so a message can be rescheduled (the last schedule wins) or asked about.</summary>
+    private readonly ConcurrentDictionary<(long Chat, int Message), CancellationTokenSource> _scheduled = new();
+
     /// <summary>Sends an HTML message. Returns null if Telegram refused it.</summary>
     public async Task<Message?> SendAsync(long chatId, string html, int? replyTo = null,
         InlineKeyboardMarkup? keyboard = null, CancellationToken ct = default)
     {
         try
         {
-            return await bot.SendMessage(chatId, html, ParseMode.Html,
+            var sent = await bot.SendMessage(chatId, html, ParseMode.Html,
                 replyParameters: replyTo is { } id ? new ReplyParameters { MessageId = id, AllowSendingWithoutReply = true } : null,
                 replyMarkup: keyboard, linkPreviewOptions: NoPreview, cancellationToken: ct);
+
+            // Group chats have negative ids. Callers usually set a shorter life right after; this is the safety net.
+            if (chatId < 0) ScheduleDelete(chatId, sent.MessageId, GroupMessageLifetime);
+            return sent;
         }
         catch (ApiRequestException ex)
         {
@@ -107,15 +121,41 @@ public sealed class BotActions(ITelegramBotClient bot, ILogger<BotActions> log)
     }
 
     /// <summary>
-    /// Deletes a message after <paramref name="delay"/>, without waiting for it.
-    /// The schedule lives in memory: if the bot restarts in between, the message simply stays.
+    /// Deletes a message after <paramref name="delay"/>, without waiting for it. Scheduling the same message again
+    /// replaces the earlier schedule. The schedule lives in memory: if the bot restarts in between, the message stays.
     /// </summary>
-    public void ScheduleDelete(long chatId, int messageId, TimeSpan delay) =>
+    public void ScheduleDelete(long chatId, int messageId, TimeSpan delay)
+    {
+        var key = (chatId, messageId);
+        var timer = new CancellationTokenSource();
+        _scheduled.AddOrUpdate(key, timer, (_, previous) =>
+        {
+            previous.Cancel();
+            return timer;
+        });
+
         _ = Task.Run(async () =>
         {
-            await Task.Delay(delay);
+            try
+            {
+                await Task.Delay(delay, timer.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                return; // rescheduled
+            }
+            finally
+            {
+                _scheduled.TryRemove(new KeyValuePair<(long, int), CancellationTokenSource>(key, timer));
+            }
+
             await DeleteAsync(chatId, messageId, CancellationToken.None);
+            timer.Dispose();
         });
+    }
+
+    /// <summary>Whether a deletion is already planned for this message.</summary>
+    public bool IsScheduled(long chatId, int messageId) => _scheduled.ContainsKey((chatId, messageId));
 
     public async Task<bool> DeleteAsync(long chatId, int messageId, CancellationToken ct = default)
     {

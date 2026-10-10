@@ -196,7 +196,8 @@ public sealed class PanelNavigator(
 
         _pending.TryRemove(user.Id, out _);
 
-        // The old panel is now above the admin's message; replace it with a fresh one below.
+        // Tidy up: the admin's typed text and the old panel go; a fresh panel takes their place.
+        await actions.DeleteAsync(message.Chat.Id, message.MessageId, ct);
         await actions.DeleteAsync(message.Chat.Id, pending.PanelMessageId, ct);
         var view = await section.ShowAsync(context, ct);
         var html = string.IsNullOrEmpty(result.Note) ? view.Html : $"{result.Note}\n\n{view.Html}";
