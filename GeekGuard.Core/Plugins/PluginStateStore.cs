@@ -53,6 +53,13 @@ public sealed class PluginStateStore(NpgsqlDataSource db, TimeProvider clock)
     public async Task<bool> IsProAsync(long chatId, CancellationToken ct = default) =>
         await GetProUntilAsync(chatId, ct) > clock.GetUtcNow().UtcDateTime;
 
+    /// <summary>Drops what is cached for a group, after its licences changed in the database.</summary>
+    public void Forget(long chatId)
+    {
+        _proUntil.TryRemove(chatId, out _);
+        _cache.TryRemove(chatId, out _);
+    }
+
     /// <summary>Gives the group Pro until <paramref name="until"/>, or takes it away (null).</summary>
     public async Task SetProUntilAsync(long chatId, DateTime? until, CancellationToken ct = default)
     {

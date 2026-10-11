@@ -1,5 +1,6 @@
 using GeekGuard.Bot.Configuration;
 using GeekGuard.Bot.Gateway;
+using GeekGuard.Bot.Licensing;
 using GeekGuard.Bot.Plugins;
 using GeekGuard.Core;
 using GeekGuard.Core.Data.Migrations;
@@ -21,6 +22,9 @@ builder.Services
 
 builder.Services.AddGeekGuardCore(builder.Configuration);
 builder.Services.AddTelegramBot();
+
+// Activation codes bought on the Geek Forge shop (/activate). Optional: see README.
+builder.Services.AddGeekForgeLicensing(builder.Configuration);
 
 // Plugins register services, so they load before the host is built; a console logger reports what loaded.
 using (var bootLog = LoggerFactory.Create(logging => logging.AddConsole()))

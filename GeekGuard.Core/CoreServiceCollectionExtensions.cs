@@ -1,5 +1,6 @@
 using GeekGuard.Core.Data;
 using GeekGuard.Core.Groups;
+using GeekGuard.Core.Licensing;
 using GeekGuard.Core.Messaging;
 using GeekGuard.Core.Plugins;
 
@@ -22,6 +23,7 @@ public static class CoreServiceCollectionExtensions
         services.AddSingleton<BotActions>();
         services.AddSingleton<NoticeThrottle>();
         services.AddSingleton<PluginStateStore>();
+        services.AddSingleton<LicenseRedemptions>();
         return services;
     }
 }

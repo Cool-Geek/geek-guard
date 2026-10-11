@@ -88,6 +88,8 @@ Requirements: .NET 8 SDK, PostgreSQL.
 | `Telegram:Proxy` | Optional proxy URL | User Secrets / env `Telegram__Proxy` |
 | `ConnectionStrings:GeekGuard` | PostgreSQL connection string | User Secrets / env `ConnectionStrings__GeekGuard` |
 | `Telegram:OwnerIds:0` | Your numeric Telegram id: enables `/pro` and `/stats` for you in the private chat | User Secrets / env `Telegram__OwnerIds__0` |
+| `GeekForge:BaseUrl` | Optional. The Geek Forge shop address, for `/activate` codes (e.g. `https://localhost:7001` while developing) | appsettings / env `GeekForge__BaseUrl` |
+| `GeekForge:ApiKey` | Optional. Same secret as `BotApi:Key` on the shop (at least 24 characters) | User Secrets / env `GeekForge__ApiKey` |
 
 Never put the token in `appsettings.json`: this repository is public.
 

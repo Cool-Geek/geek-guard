@@ -65,6 +65,7 @@ public static class CommandMenu
     public static readonly BotCommandEntry[] GroupSettings =
     [
         Admin("lang", "🌐 زبان ربات در گروه: fa یا en — «زبان فارسی»", "🌐 Bot language here: fa or en", 90),
+        Admin("activate", "💎 فعال‌سازی کد خریدشده از سایت", "💎 Activate a code bought on the website", 92),
         Admin("help", "📖 راهنمای کامل در پیوی — «راهنما»", "📖 Full guide in private chat", 99),
     ];
 

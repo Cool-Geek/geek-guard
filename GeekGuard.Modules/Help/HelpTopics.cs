@@ -46,6 +46,7 @@ public static class HelpTopics
             • هیچ پیامی از ربات در گروه نمی‌ماند: جواب‌ها، هشدارها و خوشامد خودشان پاک می‌شوند، و دستورهای ادمین هم همین‌طور.
             • شبکه‌ی ضداسپم از اول روشن است: اسپمری که در گروه‌های دیگر گرفته شده، پشت در گروه شما می‌ماند.
             • 🆓 یعنی رایگان و 💎 یعنی نسخه‌ی Pro.
+            • کد Pro یا پلاگینی که از سایت خریدی را در خود گروه بفرست: <code>/activate GF-XXXX-XXXX-XXXX</code>
             """,
             """
             <b>🚀 Getting started</b>
@@ -69,6 +70,7 @@ public static class HelpTopics
             • Nothing the bot posts stays in the group: replies, notices and welcomes remove themselves, and so do admins' commands.
             • The anti-spam network is on from the start: spammers caught in other groups stay outside yours.
             • 🆓 means free, 💎 means Pro.
+            • Activate a Pro or plugin code bought on the website in the group: <code>/activate GF-XXXX-XXXX-XXXX</code>
             """));
 
     public static readonly HelpTopic Moderation = new("mod", ModerationPlugin.Id, 20,

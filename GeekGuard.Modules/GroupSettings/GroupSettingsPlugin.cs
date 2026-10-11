@@ -17,6 +17,7 @@ public sealed class GroupSettingsPlugin : IGeekGuardPlugin
     {
         services.AddGroupMessageHandler<LanguageHandler>();
         services.AddGroupMessageHandler<HelpCommandHandler>();
+        services.AddGroupMessageHandler<ActivateCommandHandler>();
         services.AddPanelSection<LanguageSection>();
         services.AddHelpTopic(Help.HelpTopics.GettingStarted);
         services.AddHelpTopic(Help.HelpTopics.Language);
