@@ -122,9 +122,14 @@ No message text is ever stored. The database keeps: people who started the bot (
 for each group, the ids, names and @usernames of people seen there (so admins can name them), warning counts and
 settings; and for reports, the ids of the message, its author and the reporter.
 
-### License
+### License and trademark
 
-[AGPL-3.0](LICENSE).
+The code is licensed under [AGPL-3.0](LICENSE): you may use, change and run it, and if you offer a modified version
+to others as a service, you must publish your changes under the same license.
+
+The license covers the code only. The names **Geek Guard** and **Cool Geek**, the bot @geek_guard_bot and their logos
+belong to Cool Geek and are not licensed for reuse. If you run your own modified copy, give it a different name and
+make clear it is not the official Geek Guard.
 
 ---
 
@@ -188,6 +193,11 @@ Geek Guard گروه‌های تلگرام را تمیز نگه می‌دارد: 
 یوزرنیم، زبان)؛ برای هر گروه آیدی، اسم و یوزرنیم افرادی که آنجا دیده شده‌اند (تا ادمین بتواند با یوزرنیم صدایشان کند)،
 تعداد اخطارها و تنظیمات؛ و برای گزارش‌ها شماره‌ی پیام و آیدی نویسنده و گزارش‌دهنده.
 
-### مجوز
+### مجوز و برند
 
-[AGPL-3.0](LICENSE).
+کد با مجوز [AGPL-3.0](LICENSE) منتشر شده: می‌توانید از آن استفاده کنید، تغییرش دهید و اجرایش کنید، و اگر نسخه‌ی تغییر داده شده را
+به‌صورت سرویس در اختیار دیگران بگذارید، باید تغییراتتان را با همین مجوز منتشر کنید.
+
+این مجوز فقط شامل کد است. نام‌های **Geek Guard** و **Cool Geek**، ربات @geek_guard_bot و لوگوهایشان متعلق به Cool Geek است
+و اجازه‌ی استفاده از آن‌ها داده نمی‌شود. اگر نسخه‌ی تغییر داده شده‌ی خودتان را اجرا می‌کنید، اسم دیگری رویش بگذارید
+و روشن کنید که نسخه‌ی رسمی Geek Guard نیست.
