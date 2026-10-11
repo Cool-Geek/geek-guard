@@ -8,6 +8,7 @@ using GeekGuard.Modules.GroupSettings;
 using GeekGuard.Modules.Locks;
 using GeekGuard.Modules.Moderation;
 using GeekGuard.Modules.Reports;
+using GeekGuard.Modules.SpamNetwork;
 using GeekGuard.Modules.Welcome;
 using GeekGuard.Modules.WordFilters;
 
@@ -43,6 +44,7 @@ public static class HelpTopics
             • هر دستور هم با / کار می‌کند و هم با کلمه‌ی فارسی؛ مثلاً <code>/ban</code> یا «بن».
             • دستورها فقط برای ادمین‌هاست. اگر عضو عادی دستوری بنویسد، ربات هیچ واکنشی نشان نمی‌دهد.
             • هیچ پیامی از ربات در گروه نمی‌ماند: جواب‌ها، هشدارها و خوشامد خودشان پاک می‌شوند، و دستورهای ادمین هم همین‌طور.
+            • شبکه‌ی ضداسپم از اول روشن است: اسپمری که در گروه‌های دیگر گرفته شده، پشت در گروه شما می‌ماند.
             • 🆓 یعنی رایگان و 💎 یعنی نسخه‌ی Pro.
             """,
             """
@@ -65,6 +67,7 @@ public static class HelpTopics
             • Every command works with a slash and as a Persian word, e.g. <code>/ban</code> or «بن».
             • Commands are for admins only. When a member types one, the bot does not react at all.
             • Nothing the bot posts stays in the group: replies, notices and welcomes remove themselves, and so do admins' commands.
+            • The anti-spam network is on from the start: spammers caught in other groups stay outside yours.
             • 🆓 means free, 💎 means Pro.
             """));
 
@@ -159,6 +162,50 @@ public static class HelpTopics
 
             Admins and the group's linked channel are never touched.
             In the panel: on/off, and whether to warn or only remove.
+            """));
+
+    public static readonly HelpTopic SpamNetwork = new("network", SpamNetworkPlugin.Id, 35,
+        new("🛡 شبکه‌ی ضداسپم", "🛡 Anti-spam network"),
+        new(
+            """
+            <b>🛡 شبکه‌ی ضداسپم</b>
+
+            همه‌ی گروه‌هایی که Geek Guard دارند از هم محافظت می‌کنند: اسپمری که در چند گروه گرفته شده، پشت در گروه شما می‌ماند.
+
+            <b>کی اسپمر شناخته می‌شود؟</b>
+            کسی که <b>خود ربات</b> در دست‌کم ۳ گروه مختلف، در ۳۰ روز گذشته، به‌خاطر لینک، کلمه‌ی فیلترشده یا فلود گرفته باشد.
+            • بن دستی ادمین‌ها حساب نمی‌شود، پس کسی نمی‌تواند آدم بی‌گناهی را همه‌جا گرفتار کند.
+            • قفل‌ها (مثلاً فرستادن عکس در گروهی که عکس قفل است) حساب نمی‌شوند.
+            • بعد از ۳۰ روز بدون تخلف، سابقه پاک می‌شود.
+
+            <b>وقتی وارد گروه شما شود</b>
+            همان لحظه ساکت می‌شود (یا بن، اگر در پنل این را انتخاب کرده باشید) و پیامی برای ادمین‌ها می‌آید با دکمه‌ی «✅ آزادش کن».
+            کسی که ادمین آزادش کند، در آن گروه دیگر هیچ‌وقت گرفته نمی‌شود.
+            • اعضای فعلی گروه دست نمی‌خورند؛ فقط ورود جدید.
+            • کسی که خود ادمین اضافه‌اش کند، گرفته نمی‌شود.
+
+            در پنل: خاموش / سکوت (پیش‌فرض) / بن، و تعداد اسپمرهایی که تا حالا جلویشان گرفته شده.
+            فقط آیدی عددی، گروه، نوع تخلف و زمان ذخیره می‌شود؛ متن پیام هرگز.
+            """,
+            """
+            <b>🛡 Anti-spam network</b>
+
+            Every group with Geek Guard protects the others: a spammer caught in several groups stays outside yours.
+
+            <b>Who counts as a spammer?</b>
+            Someone <b>the bot itself</b> caught for links, banned words or flooding in at least 3 different groups in the last 30 days.
+            • Admin bans never count, so nobody can get an innocent person blocked everywhere.
+            • Locks (say, a photo in a no-photo group) do not count.
+            • After 30 days without a new catch, the record is gone.
+
+            <b>When they join your group</b>
+            They are muted at once (or banned, if you chose that in the panel) and admins get a notice with a “✅ Let them in” button.
+            Someone an admin lets in is never stopped in that group again.
+            • Current members are never touched; only new joins.
+            • People an admin adds are left alone.
+
+            In the panel: off / mute (default) / ban, and how many spammers were stopped so far.
+            Only ids, groups, kinds and times are stored; never message text.
             """));
 
     public static readonly HelpTopic AntiFlood = new("flood", AntiFloodPlugin.Id, 40,

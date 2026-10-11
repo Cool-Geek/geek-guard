@@ -2,6 +2,7 @@ using Dapper;
 using GeekGuard.Bot.Configuration;
 using GeekGuard.Core.Groups;
 using GeekGuard.Core.Messaging;
+using GeekGuard.Core.Owner;
 using GeekGuard.Core.Plugins;
 using Microsoft.Extensions.Options;
 using Npgsql;
@@ -19,8 +20,12 @@ public sealed class OwnerCommands(
     PluginStateStore states,
     NpgsqlDataSource db,
     BotActions actions,
+    IEnumerable<IOwnerCommand> pluginCommands,
+    IEnumerable<IOwnerStats> pluginStats,
     TimeProvider clock)
 {
+    private readonly Dictionary<string, IOwnerCommand> _pluginCommands = pluginCommands.ToDictionary(c => "/" + c.Name, StringComparer.Ordinal);
+
     private const string ProUsage =
         "💎 <code>/pro &lt;آیدی گروه&gt; &lt;روز&gt;</code>\nمثلاً <code>/pro -1001234567890 30</code> — با ۰ روز Pro لغو می‌شود.\nآیدی هر گروه در پنل، صفحه‌ی همان گروه، هست.";
 
@@ -31,12 +36,18 @@ public sealed class OwnerCommands(
 
         var parts = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var command = parts[0].Split('@')[0].ToLowerInvariant();
-        if (command is not ("/pro" or "/stats")) return false;
+        var plugin = _pluginCommands.GetValueOrDefault(command);
+        if (command is not ("/pro" or "/stats") && plugin is null) return false;
 
         // Not an owner: swallow the command silently.
         if (!options.Value.OwnerIds.Contains(from.Id)) return true;
 
-        var reply = command == "/pro" ? await ProAsync(parts, ct) : await StatsAsync(ct);
+        var reply = command switch
+        {
+            "/pro" => await ProAsync(parts, ct),
+            "/stats" => await StatsAsync(ct),
+            _ => await plugin!.RunAsync(parts[1..], ct),
+        };
         await actions.SendAsync(message.Chat.Id, reply, ct: ct);
         return true;
     }
@@ -78,14 +89,17 @@ public sealed class OwnerCommands(
                    (SELECT count(*) FROM group_closures)
             """, cancellationToken: ct));
 
-        return $"""
-            📊 <b>آمار Geek Guard</b>
-
-            👥 گروه‌های فعال: <b>{row.Groups}</b>
-            💎 گروه‌های Pro: <b>{row.Pro}</b>
-            🔒 گروه‌های بسته در این لحظه: <b>{row.Closed}</b>
-            🙋 کسانی که ربات را استارت کرده‌اند: <b>{row.Users}</b>
-            👤 افراد دیده‌شده در گروه‌ها: <b>{row.Members}</b>
-            """;
+        var lines = new List<string>
+        {
+            "📊 <b>آمار Geek Guard</b>",
+            "",
+            $"👥 گروه‌های فعال: <b>{row.Groups}</b>",
+            $"💎 گروه‌های Pro: <b>{row.Pro}</b>",
+            $"🔒 گروه‌های بسته در این لحظه: <b>{row.Closed}</b>",
+            $"🙋 کسانی که ربات را استارت کرده‌اند: <b>{row.Users}</b>",
+            $"👤 افراد دیده‌شده در گروه‌ها: <b>{row.Members}</b>",
+        };
+        foreach (var source in pluginStats) lines.AddRange(await source.LinesAsync(ct));
+        return string.Join('\n', lines);
     }
 }

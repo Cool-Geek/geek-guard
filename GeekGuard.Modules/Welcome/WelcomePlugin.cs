@@ -108,7 +108,8 @@ public sealed class WelcomeHandler(
     public async Task<HandlerResult> HandleAsync(GroupMessageContext context, CancellationToken ct)
     {
         // People, not bots; and not the bot itself joining (that is the "thanks for adding me" moment, not a welcome).
-        var newcomers = (context.Message.NewChatMembers ?? []).Where(u => !u.IsBot).ToList();
+        // Known spammers held at the door by the spam network are not welcomed.
+        var newcomers = (context.Message.NewChatMembers ?? []).Where(u => !u.IsBot && !context.HeldNewcomers.Contains(u.Id)).ToList();
         if (newcomers.Count == 0) return HandlerResult.Continue;
 
         var chatId = context.ChatId;

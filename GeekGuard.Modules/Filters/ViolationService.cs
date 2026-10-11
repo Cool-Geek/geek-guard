@@ -8,7 +8,7 @@ namespace GeekGuard.Modules.Filters;
 /// (the warning notice carries the reason) or post a short notice. Notices are throttled per member, so a
 /// spammer cannot turn the bot's own replies into spam.
 /// </summary>
-public sealed class ViolationService(BotActions actions, WarningService warnings, NoticeThrottle throttle)
+public sealed class ViolationService(BotActions actions, WarningService warnings, NoticeThrottle throttle, SpamNetwork.SpamNetwork network)
 {
     private static readonly TimeSpan NoticeLifetime = TimeSpan.FromSeconds(30);
 
@@ -23,6 +23,9 @@ public sealed class ViolationService(BotActions actions, WarningService warnings
 
         // A member posting as one of their channels has no user to warn or mention.
         if (context.Message is not { SenderChat: null, From: { } member }) return;
+
+        // The anti-spam network learns from what the bot catches (links and banned words count; locks do not).
+        await network.RecordAsync(context.ChatId, member.Id, kind, ct);
 
         var lang = context.Group.Lang;
         if (warn)

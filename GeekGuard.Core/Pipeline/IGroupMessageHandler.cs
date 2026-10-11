@@ -37,6 +37,12 @@ public sealed class GroupMessageContext
     /// </summary>
     public bool IsEdit { get; init; }
 
+    /// <summary>
+    /// People who just joined but were held back by an earlier handler (e.g. muted as known spammers):
+    /// the welcome leaves them out.
+    /// </summary>
+    public HashSet<long> HeldNewcomers { get; } = [];
+
     /// <summary>True when an admin posted anonymously, i.e. as the group itself.</summary>
     public bool IsAnonymousAdmin => Message.SenderChat?.Id == ChatId;
 

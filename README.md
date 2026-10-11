@@ -22,6 +22,7 @@ and a full settings panel in the bot's private chat. Everything works in Persian
 | | Feature | What it does |
 | --- | --- | --- |
 | 🆓 | Warnings & penalties | Warn, mute, kick, ban (timed or permanent). Target a member by reply, @username, numeric id or mention. Warning limit with an automatic penalty; warnings expire after a quiet period. |
+| 🆓 | Anti-spam network | A spammer the bot caught in 3 groups is stopped when joining any other Geek Guard group; admins can let them in with one tap. Admin bans never count. |
 | 🆓 | Anti-link | Removes links, including links hidden behind text, link buttons, “t . me” tricks and messages edited to add a link. |
 | 🆓 | Anti-flood | Removes the whole burst and mutes the sender. Four levels. |
 | 🆓 | Close group | Only admins can post while closed, until opened or for a set time. The group's permissions come back exactly. |
@@ -121,7 +122,8 @@ Never edit a migration that has been released; add a new one.
 
 No message text is ever stored. The database keeps: people who started the bot (id, name, @username, language);
 for each group, the ids, names and @usernames of people seen there (so admins can name them), warning counts and
-settings; and for reports, the ids of the message, its author and the reporter.
+settings; for reports, the ids of the message, its author and the reporter; and for the anti-spam network, the ids of
+people the bot caught, where, for what and when (kept 30 days).
 
 ### License and trademark
 
@@ -147,6 +149,7 @@ Geek Guard گروه‌های تلگرام را تمیز نگه می‌دارد: 
 | | امکان | توضیح |
 | --- | --- | --- |
 | 🆓 | اخطار و مجازات | اخطار، سکوت، اخراج و بن (موقت یا دائمی). مشخص کردن کاربر با ریپلای، @یوزرنیم، آیدی عددی یا منشن. سقف اخطار با مجازات خودکار؛ اخطارها بعد از مدتی بی‌تخلفی صفر می‌شوند. |
+| 🆓 | شبکه‌ی ضداسپم | اسپمری که ربات در ۳ گروه گرفته، موقع ورود به هر گروه دیگری از Geek Guard گرفته می‌شود؛ ادمین با یک کلیک آزادش می‌کند. بن دستی ادمین‌ها حساب نمی‌شود. |
 | 🆓 | ضدلینک | لینک‌ها را پاک می‌کند، حتی لینک پشت متن، دکمه‌ی لینک‌دار، ترفند «t . me» و پیامی که بعداً ویرایش شده. |
 | 🆓 | ضدفلود | همه‌ی پیام‌های پشت‌سرهم را پاک و فرستنده را ساکت می‌کند. چهار سطح. |
 | 🆓 | بستن گروه | تا وقتی باز کنی یا برای مدت مشخص فقط ادمین‌ها پیام می‌دهند؛ دسترسی‌های قبلی گروه دقیقاً برمی‌گردد. |
@@ -192,7 +195,7 @@ Geek Guard گروه‌های تلگرام را تمیز نگه می‌دارد: 
 
 متن هیچ پیامی ذخیره نمی‌شود. دیتابیس فقط این‌ها را نگه می‌دارد: کسانی که ربات را استارت کرده‌اند (آیدی، اسم،
 یوزرنیم، زبان)؛ برای هر گروه آیدی، اسم و یوزرنیم افرادی که آنجا دیده شده‌اند (تا ادمین بتواند با یوزرنیم صدایشان کند)،
-تعداد اخطارها و تنظیمات؛ و برای گزارش‌ها شماره‌ی پیام و آیدی نویسنده و گزارش‌دهنده.
+تعداد اخطارها و تنظیمات؛ برای گزارش‌ها شماره‌ی پیام و آیدی نویسنده و گزارش‌دهنده؛ و برای شبکه‌ی ضداسپم، آیدی کسانی که ربات گرفته، در کدام گروه، برای چه و کی (۳۰ روز نگه داشته می‌شود).
 
 ### مجوز و برند
 

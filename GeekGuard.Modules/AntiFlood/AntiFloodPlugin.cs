@@ -55,6 +55,7 @@ public sealed class AntiFloodSettings
 }
 
 public sealed class AntiFloodHandler(
+    SpamNetwork.SpamNetwork network,
     FloodTracker tracker,
     PluginStateStore states,
     BotActions actions,
@@ -81,6 +82,7 @@ public sealed class AntiFloodHandler(
         if (burst is null) return HandlerResult.Continue;
 
         foreach (var messageId in burst) await actions.DeleteAsync(context.ChatId, messageId, ct);
+        await network.RecordAsync(context.ChatId, member.Id, "flood", ct);
 
         var muteFor = TimeSpan.FromMinutes(Math.Clamp(settings.MuteMinutes, 1, 1440));
         var result = await actions.MuteAsync(context.ChatId, member.Id, muteFor, ct);
