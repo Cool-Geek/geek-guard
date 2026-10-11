@@ -26,7 +26,7 @@ and a full settings panel in the bot's private chat. Everything works in Persian
 | 🆓 | Anti-link | Removes links, including links hidden behind text, link buttons, “t . me” tricks and messages edited to add a link. |
 | 🆓 | Anti-flood | Removes the whole burst and mutes the sender. Four levels. |
 | 🆓 | Close group | Only admins can post while closed, until opened or for a set time. The group's permissions come back exactly. |
-| 💎 | Night mode | Closes and opens the group by itself on a schedule *(coming soon)*. |
+| 💎 | Night mode | Closes the group every night and opens it in the morning, on the days you choose. |
 | 🆓 | Locks | Photos, videos, stickers, GIFs, files, voice, polls, forwards, @usernames, bots added by members, join/leave notices. “Lock all” in one go. |
 | 🆓 | Word filter | Catches disguised words (dotted, spaced, stretched, Arabic letters) without hitting innocent words. Up to 20 words. |
 | 💎 | Word filter, more words | More than 20 words *(coming soon)*. |
@@ -153,7 +153,7 @@ Geek Guard گروه‌های تلگرام را تمیز نگه می‌دارد: 
 | 🆓 | ضدلینک | لینک‌ها را پاک می‌کند، حتی لینک پشت متن، دکمه‌ی لینک‌دار، ترفند «t . me» و پیامی که بعداً ویرایش شده. |
 | 🆓 | ضدفلود | همه‌ی پیام‌های پشت‌سرهم را پاک و فرستنده را ساکت می‌کند. چهار سطح. |
 | 🆓 | بستن گروه | تا وقتی باز کنی یا برای مدت مشخص فقط ادمین‌ها پیام می‌دهند؛ دسترسی‌های قبلی گروه دقیقاً برمی‌گردد. |
-| 💎 | حالت شب | بستن و باز کردن خودکار گروه طبق برنامه *(به‌زودی)*. |
+| 💎 | حالت شب | بسته شدن خودکار گروه هر شب و باز شدن صبح، در روزهایی که انتخاب می‌کنید. |
 | 🆓 | قفل‌ها | عکس، ویدیو، استیکر، گیف، فایل، ویس، نظرسنجی، فوروارد، آیدی، ربات، پیام ورود و خروج. «قفل همه» با یک دستور. |
 | 🆓 | فیلتر کلمات | کلمه‌های پنهان‌شده (نقطه‌دار، فاصله‌دار، کشیده، با حروف عربی) را می‌گیرد بدون اینکه کلمه‌های بی‌گناه پاک شوند. تا ۲۰ کلمه. |
 | 💎 | فیلتر کلمات، کلمه‌ی بیشتر | بیش از ۲۰ کلمه *(به‌زودی)*. |
