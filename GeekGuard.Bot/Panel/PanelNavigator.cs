@@ -53,6 +53,8 @@ public sealed class PanelNavigator(
     private static readonly Localized ViewOnly = new(
         "👁 فقط مشاهده: تغییر تنظیمات برای سازنده‌ی گروه و ادمین‌هایی است که اجازه‌ی «محدود کردن اعضا» دارند.",
         "👁 View only: settings can be changed by the owner and admins who may restrict members.");
+    private static readonly Localized ProUntil = new("💎 Pro تا {0}", "💎 Pro until {0}");
+    private static readonly Localized FreePlan = new("🆓 نسخه‌ی رایگان", "🆓 Free plan");
     private static readonly Localized ChooseSection = new("یک بخش را انتخاب کن:", "Choose a section:");
     private static readonly Localized BackHome = new("🔙 گروه‌ها", "🔙 Groups");
     private static readonly Localized NotAdmin = new("⛔ ادمین این گروه نیستی.", "⛔ You are not an admin of that group.");
@@ -108,7 +110,7 @@ public sealed class PanelNavigator(
             case "g" when args.Length == 2 && long.TryParse(args[1], out var menuChat):
                 var menuContext = await ContextAsync(menuChat, user.Id, lang, null, ct);
                 if (menuContext is null) { await RefuseAsync(query, NotAdmin, lang, user, panel, ct); return; }
-                view = GroupMenu(menuContext);
+                view = await GroupMenuAsync(menuContext, ct);
                 break;
 
             case "i" when args.Length == 4 && long.TryParse(args[1], out var inputChat)
@@ -231,10 +233,17 @@ public sealed class PanelNavigator(
         return new PanelView(html, new InlineKeyboardMarkup(rows));
     }
 
-    private PanelView GroupMenu(PanelContext context)
+    private async Task<PanelView> GroupMenuAsync(PanelContext context, CancellationToken ct)
     {
         var lang = context.Lang;
-        var html = $"<b>{GroupTitle.Format(lang, Html.Escape(context.Group.Title))}</b>\n\n"
+        var proUntil = await states.GetProUntilAsync(context.ChatId, ct);
+        var pro = proUntil > DateTime.UtcNow
+            ? ProUntil.Format(lang, LocalTime.When(new DateTimeOffset(proUntil.Value, TimeSpan.Zero), lang, TimeProvider.System))
+            : FreePlan.Get(lang);
+
+        // The id is shown so it can be copied (e.g. for buying Pro for this group).
+        var html = $"<b>{GroupTitle.Format(lang, Html.Escape(context.Group.Title))}</b>\n"
+                   + $"🆔 <code>{context.ChatId}</code>\n{pro}\n\n"
                    + (context.CanEdit ? "" : ViewOnly.Get(lang) + "\n\n")
                    + ChooseSection.Get(lang);
 

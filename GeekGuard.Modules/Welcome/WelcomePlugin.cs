@@ -50,6 +50,16 @@ public sealed class WelcomeSettings
     /// <summary>A copy to change and save (cached settings are shared and never changed in place).</summary>
     public WelcomeSettings Copy() => (WelcomeSettings)MemberwiseClone();
 
+    /// <summary>
+    /// The line under every welcome in groups without Pro: how other admins discover the bot.
+    /// Pro groups do not get it.
+    /// </summary>
+    public static readonly Localized Footer = new(
+        "🛡 <a href=\"https://t.me/{0}\">محافظت‌شده با Geek Guard</a>",
+        "🛡 <a href=\"https://t.me/{0}\">Protected by Geek Guard</a>");
+
+    public static string FooterFor(string lang, string botUsername) => "\n\n" + Footer.Format(lang, botUsername);
+
     public static readonly Localized DefaultText = new(
         "👋 {name} عزیز، به «{group}» خوش اومدی!",
         "👋 Welcome to “{group}”, {name}!");
@@ -108,6 +118,7 @@ public sealed class WelcomeHandler(
         var lang = context.Group.Lang;
         var count = settings.Text.Contains("{count}") ? await actions.GetMemberCountAsync(chatId, ct) : null;
         var text = settings.Render(lang, newcomers, context.Message.Chat.Title ?? context.Group.Title, count);
+        if (!await states.IsProAsync(chatId, ct)) text += WelcomeSettings.FooterFor(lang, me.Username);
 
         var rules = await states.GetSettingsAsync<RulesSettings>(chatId, RulesPlugin.Id, ct);
         var keyboard = rules.Text.Length > 0 ? RulesPlugin.Button(me.Username, chatId, lang) : null;

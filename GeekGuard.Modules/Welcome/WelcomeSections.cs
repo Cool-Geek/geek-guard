@@ -7,7 +7,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 namespace GeekGuard.Modules.Welcome;
 
 /// <summary>Panel: welcome on/off, its text, and whether only the latest welcome stays.</summary>
-public sealed class WelcomeSection(PluginStateStore states) : IPanelSection, IPanelTextInput
+public sealed class WelcomeSection(PluginStateStore states, BotIdentity me) : IPanelSection, IPanelTextInput
 {
     private static readonly Localized Text = new(
         "👋 <b>خوشامدگویی</b>\n\nوضعیت: <b>{0}</b>\nپاک شدن خوشامد قبلی با ورود نفر بعد: <b>{1}</b>\n\nپیش‌نمایش:\n{2}",
@@ -37,6 +37,7 @@ public sealed class WelcomeSection(PluginStateStore states) : IPanelSection, IPa
         // The preview is in the group's language: that is what newcomers will read.
         var sample = new[] { new User { Id = context.UserId, FirstName = context.Group.Lang == Languages.English ? "New member" : "عضو جدید" } };
         var preview = s.Render(context.Group.Lang, sample, context.Group.Title, 123);
+        if (!await states.IsProAsync(context.ChatId, ct)) preview += WelcomeSettings.FooterFor(context.Group.Lang, me.Username);
 
         var html = context.T(Text)
             .Replace("{0}", s.Enabled ? (fa ? "روشن ✅" : "on ✅") : (fa ? "خاموش ❌" : "off ❌"))

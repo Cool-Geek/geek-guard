@@ -10,7 +10,8 @@ public sealed record PluginState(string PluginId, bool? Enabled, DateTime? Licen
 
 /// <summary>
 /// Decides whether a plugin runs in a group: it must be switched on (or on by default),
-/// and Pro plugins also need an unexpired licence. Per-group rows are cached in memory.
+/// and Pro plugins also need an unexpired licence: Pro for the whole group, or for that plugin alone.
+/// Per-group rows are cached in memory.
 /// </summary>
 public sealed class PluginStateStore(NpgsqlDataSource db, TimeProvider clock)
 {
@@ -18,20 +19,48 @@ public sealed class PluginStateStore(NpgsqlDataSource db, TimeProvider clock)
 
     private readonly ConcurrentDictionary<long, IReadOnlyDictionary<string, PluginState>> _cache = new();
     private readonly ConcurrentDictionary<(long Chat, string Plugin), object> _settings = new();
+    private readonly ConcurrentDictionary<long, DateTime?> _proUntil = new();
 
     public async Task<bool> IsActiveAsync(long chatId, PluginManifest plugin, CancellationToken ct = default)
     {
         var states = await GetStatesAsync(chatId, ct);
         states.TryGetValue(plugin.Id, out var state);
-        return IsActive(plugin, state, clock.GetUtcNow().UtcDateTime);
+        var proUntil = plugin.Tier == PluginTier.Pro ? await GetProUntilAsync(chatId, ct) : null;
+        return IsActive(plugin, state, clock.GetUtcNow().UtcDateTime, proUntil);
     }
 
     /// <summary>The activation rule on its own, so it can be tested without a database.</summary>
-    public static bool IsActive(PluginManifest plugin, PluginState? state, DateTime utcNow)
+    public static bool IsActive(PluginManifest plugin, PluginState? state, DateTime utcNow, DateTime? groupProUntil = null)
     {
         var enabled = state?.Enabled ?? plugin.EnabledByDefault;
-        var licensed = plugin.Tier == PluginTier.Free || state?.LicensedUntil > utcNow;
+        var licensed = plugin.Tier == PluginTier.Free || state?.LicensedUntil > utcNow || groupProUntil > utcNow;
         return enabled && licensed;
+    }
+
+    /// <summary>Until when the group has Pro (null: never had it). It may be in the past.</summary>
+    public async Task<DateTime?> GetProUntilAsync(long chatId, CancellationToken ct = default)
+    {
+        if (_proUntil.TryGetValue(chatId, out var cached)) return cached;
+
+        await using var connection = await db.OpenConnectionAsync(ct);
+        var until = await connection.ExecuteScalarAsync<DateTime?>(new CommandDefinition(
+            "SELECT pro_until FROM groups WHERE chat_id = @chatId", new { chatId }, cancellationToken: ct));
+        _proUntil[chatId] = until;
+        return until;
+    }
+
+    /// <summary>Whether the group has Pro right now.</summary>
+    public async Task<bool> IsProAsync(long chatId, CancellationToken ct = default) =>
+        await GetProUntilAsync(chatId, ct) > clock.GetUtcNow().UtcDateTime;
+
+    /// <summary>Gives the group Pro until <paramref name="until"/>, or takes it away (null).</summary>
+    public async Task SetProUntilAsync(long chatId, DateTime? until, CancellationToken ct = default)
+    {
+        await using var connection = await db.OpenConnectionAsync(ct);
+        await connection.ExecuteAsync(new CommandDefinition(
+            "UPDATE groups SET pro_until = @until, updated_at = now() WHERE chat_id = @chatId",
+            new { chatId, until }, cancellationToken: ct));
+        _proUntil[chatId] = until;
     }
 
     public async Task<IReadOnlyDictionary<string, PluginState>> GetStatesAsync(long chatId, CancellationToken ct = default)

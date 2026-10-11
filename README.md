@@ -86,6 +86,7 @@ Requirements: .NET 8 SDK, PostgreSQL.
 | `Telegram:BotToken` | Token from @BotFather | User Secrets / env `Telegram__BotToken` |
 | `Telegram:Proxy` | Optional proxy URL | User Secrets / env `Telegram__Proxy` |
 | `ConnectionStrings:GeekGuard` | PostgreSQL connection string | User Secrets / env `ConnectionStrings__GeekGuard` |
+| `Telegram:OwnerIds:0` | Your numeric Telegram id: enables `/pro` and `/stats` for you in the private chat | User Secrets / env `Telegram__OwnerIds__0` |
 
 Never put the token in `appsettings.json`: this repository is public.
 

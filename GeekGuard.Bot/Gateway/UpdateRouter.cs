@@ -1,4 +1,5 @@
 using GeekGuard.Bot.Help;
+using GeekGuard.Bot.Owner;
 using GeekGuard.Bot.Panel;
 using GeekGuard.Core.Callbacks;
 using GeekGuard.Core.Groups;
@@ -22,6 +23,7 @@ public sealed class UpdateRouter(
     IEnumerable<IStartLinkHandler> startLinkHandlers,
     PanelNavigator panel,
     HelpNavigator help,
+    OwnerCommands owner,
     ILogger<UpdateRouter> log)
 {
     private readonly Dictionary<string, IStartLinkHandler> _startLinks =
@@ -52,6 +54,8 @@ public sealed class UpdateRouter(
             await panel.TryAcceptTextAsync(message, ct);
             return;
         }
+
+        if (await owner.TryHandleAsync(message, ct)) return;
 
         if (text.StartsWith("/help", StringComparison.Ordinal))
         {
