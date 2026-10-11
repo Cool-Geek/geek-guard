@@ -25,8 +25,12 @@ public sealed class BotActions(ITelegramBotClient bot, ILogger<BotActions> log)
     private readonly ConcurrentDictionary<(long Chat, int Message), CancellationTokenSource> _scheduled = new();
 
     /// <summary>Sends an HTML message. Returns null if Telegram refused it.</summary>
+    /// <param name="keep">
+    /// Group messages are removed after <see cref="GroupMessageLifetime"/> unless this is set; only for notices that
+    /// must stay while something lasts (e.g. "the group is closed") and are removed by their owner.
+    /// </param>
     public async Task<Message?> SendAsync(long chatId, string html, int? replyTo = null,
-        InlineKeyboardMarkup? keyboard = null, CancellationToken ct = default)
+        InlineKeyboardMarkup? keyboard = null, CancellationToken ct = default, bool keep = false)
     {
         try
         {
@@ -35,7 +39,7 @@ public sealed class BotActions(ITelegramBotClient bot, ILogger<BotActions> log)
                 replyMarkup: keyboard, linkPreviewOptions: NoPreview, cancellationToken: ct);
 
             // Group chats have negative ids. Callers usually set a shorter life right after; this is the safety net.
-            if (chatId < 0) ScheduleDelete(chatId, sent.MessageId, GroupMessageLifetime);
+            if (chatId < 0 && !keep) ScheduleDelete(chatId, sent.MessageId, GroupMessageLifetime);
             return sent;
         }
         catch (ApiRequestException ex)
@@ -254,6 +258,35 @@ public sealed class BotActions(ITelegramBotClient bot, ILogger<BotActions> log)
     private static DateTime? Until(TimeSpan? duration) => duration is { } d ? DateTime.UtcNow + d : null;
 
     // Built with property initialisers rather than the bool constructor, which not every Telegram.Bot 22.x has.
+    /// <summary>The group's default member permissions, or null if Telegram would not say.</summary>
+    public async Task<ChatPermissions?> GetPermissionsAsync(long chatId, CancellationToken ct = default)
+    {
+        try
+        {
+            return (await bot.GetChat(chatId, ct)).Permissions;
+        }
+        catch (ApiRequestException ex)
+        {
+            log.LogDebug("getChat {Chat} refused: {Message}", chatId, ex.Message);
+            return null;
+        }
+    }
+
+    /// <summary>Sets the group's default member permissions (what every member may send).</summary>
+    public async Task<ActionResult> SetPermissionsAsync(long chatId, ChatPermissions permissions, CancellationToken ct = default)
+    {
+        try
+        {
+            await bot.SetChatPermissions(chatId, permissions, cancellationToken: ct);
+            return ActionResult.Ok;
+        }
+        catch (ApiRequestException ex)
+        {
+            log.LogWarning("setChatPermissions in {Chat} refused: {Message}", chatId, ex.Message);
+            return ActionResult.From(ex);
+        }
+    }
+
     private static ChatPermissions NoPermissions() => new()
     {
         CanSendMessages = false, CanSendAudios = false, CanSendDocuments = false, CanSendPhotos = false,

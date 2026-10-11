@@ -17,6 +17,8 @@ public static class CoreServiceCollectionExtensions
         services.AddSingleton<GroupDirectory>();
         services.AddSingleton<GroupAdmins>();
         services.AddSingleton<MemberDirectory>();
+        services.AddSingleton<GroupCloser>();
+        services.AddHostedService<GroupReopenService>();
         services.AddSingleton<BotActions>();
         services.AddSingleton<NoticeThrottle>();
         services.AddSingleton<PluginStateStore>();

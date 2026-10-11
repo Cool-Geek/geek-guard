@@ -3,6 +3,7 @@ using GeekGuard.Core.Messaging;
 using GeekGuard.Modules.AntiFlood;
 using GeekGuard.Modules.AntiLink;
 using GeekGuard.Modules.Diagnostics;
+using GeekGuard.Modules.GroupClose;
 using GeekGuard.Modules.GroupSettings;
 using GeekGuard.Modules.Locks;
 using GeekGuard.Modules.Moderation;
@@ -190,6 +191,40 @@ public static class HelpTopics
             • <code>/flood strict</code> (or low / medium / off) — «ضدفلود سخت»
 
             Edits are not counted and admins are exempt. The mute length is set in the panel.
+            """));
+
+    public static readonly HelpTopic GroupClose = new("close", GroupClosePlugin.Id, 45,
+        new("🔐 بستن گروه", "🔐 Close group"),
+        new(
+            """
+            <b>🔐 بستن و باز کردن گروه</b>
+
+            وقتی گروه بسته است فقط ادمین‌ها می‌توانند پیام بدهند. پیامی در گروه می‌ماند که می‌گوید گروه بسته است و کی باز می‌شود.
+            موقع باز شدن، دسترسی‌های قبلی گروه دقیقاً برمی‌گردد.
+
+            <b>دستورها</b>
+            • «بستن گروه» یا <code>/close</code>: تا وقتی باز کنی
+            • «بستن گروه ۲ ساعت» یا <code>/close 2h</code>: بعد از این مدت خودش باز می‌شود
+            • «باز کردن گروه» یا <code>/open</code>
+
+            از پنل هم می‌شود بست و باز کرد. برای این کار اجازه‌ی محدود کردن اعضا لازم است.
+
+            💎 بسته شدن خودکار هر شب (حالت شب) در نسخه‌ی Pro.
+            """,
+            """
+            <b>🔐 Close and open the group</b>
+
+            While the group is closed only admins can post. A notice stays in the group saying it is closed and when it opens.
+            When it opens, the group's previous permissions come back exactly.
+
+            <b>Commands</b>
+            • <code>/close</code>: until you open it — «بستن گروه»
+            • <code>/close 2h</code>: opens by itself after that time
+            • <code>/open</code> — «باز کردن گروه»
+
+            Also from the panel. Needs the restrict-members right.
+
+            💎 Closing automatically every night (night mode) comes with Pro.
             """));
 
     public static readonly HelpTopic Locks = new("locks", LocksPlugin.Id, 50,

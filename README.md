@@ -24,6 +24,8 @@ and a full settings panel in the bot's private chat. Everything works in Persian
 | 🆓 | Warnings & penalties | Warn, mute, kick, ban (timed or permanent). Target a member by reply, @username, numeric id or mention. Warning limit with an automatic penalty; warnings expire after a quiet period. |
 | 🆓 | Anti-link | Removes links, including links hidden behind text, link buttons, “t . me” tricks and messages edited to add a link. |
 | 🆓 | Anti-flood | Removes the whole burst and mutes the sender. Four levels. |
+| 🆓 | Close group | Only admins can post while closed, until opened or for a set time. The group's permissions come back exactly. |
+| 💎 | Night mode | Closes and opens the group by itself on a schedule *(coming soon)*. |
 | 🆓 | Locks | Photos, videos, stickers, GIFs, files, voice, polls, forwards, @usernames, bots added by members, join/leave notices. “Lock all” in one go. |
 | 🆓 | Word filter | Catches disguised words (dotted, spaced, stretched, Arabic letters) without hitting innocent words. Up to 20 words. |
 | 💎 | Word filter, more words | More than 20 words *(coming soon)*. |
@@ -45,6 +47,7 @@ and the admin's command and the bot's reply delete themselves after a few second
 | `/ban [1d]`, `/unban` | «بن»، «رفع بن» | |
 | `/cleanup 20s` | «پاکسازی ۲۰ ثانیه» | when commands and replies are removed |
 | `/flood [off\|low\|medium\|strict]` | «ضدفلود سخت» | |
+| `/close [2h]`, `/open` | «بستن گروه ۲ ساعت»، «باز کردن گروه» | |
 | `/lock photo`, `/unlock photo`, `/lock all`, `/locks` | «قفل عکس»، «باز کردن عکس»، «قفل همه»، «قفل‌ها» | |
 | `/filter a, b`, `/unfilter a`, `/filters` | «فیلتر کلمه …»، «حذف فیلتر …»، «فیلترها» | |
 | `/welcome [on\|off]`, `/setwelcome text`, `/resetwelcome` | «خوشامد»، «تنظیم خوشامد …» | |
@@ -140,6 +143,8 @@ Geek Guard گروه‌های تلگرام را تمیز نگه می‌دارد: 
 | 🆓 | اخطار و مجازات | اخطار، سکوت، اخراج و بن (موقت یا دائمی). مشخص کردن کاربر با ریپلای، @یوزرنیم، آیدی عددی یا منشن. سقف اخطار با مجازات خودکار؛ اخطارها بعد از مدتی بی‌تخلفی صفر می‌شوند. |
 | 🆓 | ضدلینک | لینک‌ها را پاک می‌کند، حتی لینک پشت متن، دکمه‌ی لینک‌دار، ترفند «t . me» و پیامی که بعداً ویرایش شده. |
 | 🆓 | ضدفلود | همه‌ی پیام‌های پشت‌سرهم را پاک و فرستنده را ساکت می‌کند. چهار سطح. |
+| 🆓 | بستن گروه | تا وقتی باز کنی یا برای مدت مشخص فقط ادمین‌ها پیام می‌دهند؛ دسترسی‌های قبلی گروه دقیقاً برمی‌گردد. |
+| 💎 | حالت شب | بستن و باز کردن خودکار گروه طبق برنامه *(به‌زودی)*. |
 | 🆓 | قفل‌ها | عکس، ویدیو، استیکر، گیف، فایل، ویس، نظرسنجی، فوروارد، آیدی، ربات، پیام ورود و خروج. «قفل همه» با یک دستور. |
 | 🆓 | فیلتر کلمات | کلمه‌های پنهان‌شده (نقطه‌دار، فاصله‌دار، کشیده، با حروف عربی) را می‌گیرد بدون اینکه کلمه‌های بی‌گناه پاک شوند. تا ۲۰ کلمه. |
 | 💎 | فیلتر کلمات، کلمه‌ی بیشتر | بیش از ۲۰ کلمه *(به‌زودی)*. |
