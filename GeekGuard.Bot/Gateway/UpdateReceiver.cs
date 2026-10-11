@@ -16,6 +16,7 @@ public sealed class UpdateReceiver(
     ITelegramBotClient bot,
     BotIdentity identity,
     UpdateRouter router,
+    CommandMenuPublisher commandMenu,
     IOptions<TelegramOptions> options,
     ILogger<UpdateReceiver> log) : BackgroundService
 {
@@ -32,6 +33,7 @@ public sealed class UpdateReceiver(
         var me = await ConnectAsync(ct);
         identity.Initialize(me);
         log.LogInformation("Connected as @{Username} (id {Id})", identity.Username, identity.Id);
+        await commandMenu.PublishAsync(ct);
 
         var receiverOptions = new ReceiverOptions
         {

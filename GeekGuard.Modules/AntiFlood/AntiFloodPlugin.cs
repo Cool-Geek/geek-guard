@@ -22,6 +22,7 @@ public sealed class AntiFloodPlugin : IGeekGuardPlugin
         services.AddGroupMessageHandler<AntiFloodSettingsHandler>();
         services.AddPanelSection<AntiFloodSection>();
         services.AddHelpTopic(Help.HelpTopics.AntiFlood);
+        services.AddBotCommands(Help.CommandMenu.AntiFlood);
     }
 }
 

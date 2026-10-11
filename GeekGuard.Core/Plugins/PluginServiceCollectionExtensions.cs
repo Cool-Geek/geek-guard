@@ -1,4 +1,5 @@
 using GeekGuard.Core.Callbacks;
+using GeekGuard.Core.Commands;
 using GeekGuard.Core.Data.Migrations;
 using GeekGuard.Core.Help;
 using GeekGuard.Core.Panel;
@@ -46,6 +47,13 @@ public static class PluginServiceCollectionExtensions
     public static IServiceCollection AddHelpTopic(this IServiceCollection services, HelpTopic topic)
     {
         services.AddSingleton(topic);
+        return services;
+    }
+
+    /// <summary>Adds commands to Telegram's "/" menu; see <see cref="BotCommandEntry"/>.</summary>
+    public static IServiceCollection AddBotCommands(this IServiceCollection services, params BotCommandEntry[] commands)
+    {
+        foreach (var command in commands) services.AddSingleton(command);
         return services;
     }
 

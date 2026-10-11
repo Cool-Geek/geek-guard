@@ -23,6 +23,7 @@ public static class TelegramServiceCollectionExtensions
         });
 
         services.AddSingleton<UpdateRouter>();
+        services.AddSingleton<CommandMenuPublisher>();
         services.AddSingleton<PanelNavigator>();
         services.AddSingleton<ICallbackHandler>(sp => sp.GetRequiredService<PanelNavigator>());
         services.AddSingleton<HelpNavigator>();

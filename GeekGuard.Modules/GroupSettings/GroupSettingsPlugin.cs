@@ -20,6 +20,7 @@ public sealed class GroupSettingsPlugin : IGeekGuardPlugin
         services.AddPanelSection<LanguageSection>();
         services.AddHelpTopic(Help.HelpTopics.GettingStarted);
         services.AddHelpTopic(Help.HelpTopics.Language);
+        services.AddBotCommands(Help.CommandMenu.GroupSettings);
     }
 }
 

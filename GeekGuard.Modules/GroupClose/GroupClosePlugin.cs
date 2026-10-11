@@ -23,6 +23,7 @@ public sealed class GroupClosePlugin : IGeekGuardPlugin
         services.AddGroupMessageHandler<GroupCloseCommandsHandler>();
         services.AddPanelSection<GroupCloseSection>();
         services.AddHelpTopic(Help.HelpTopics.GroupClose);
+        services.AddBotCommands(Help.CommandMenu.GroupClose);
     }
 
     internal static readonly Localized NotClosed = new("ℹ️ گروه بسته نیست.", "ℹ️ The group is not closed.");

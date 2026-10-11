@@ -17,6 +17,7 @@ public sealed class DiagnosticsPlugin : IGeekGuardPlugin
     {
         services.AddGroupMessageHandler<PingHandler>();
         services.AddHelpTopic(Help.HelpTopics.Diagnostics);
+        services.AddBotCommands(Help.CommandMenu.Diagnostics);
     }
 }
 

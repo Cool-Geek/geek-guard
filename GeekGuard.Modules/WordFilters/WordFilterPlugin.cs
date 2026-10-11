@@ -24,6 +24,7 @@ public sealed class WordFilterPlugin : IGeekGuardPlugin
         services.AddGroupMessageHandler<WordFilterHandler>();
         services.AddPanelSection<WordFilterSection>();
         services.AddHelpTopic(Help.HelpTopics.WordFilter);
+        services.AddBotCommands(Help.CommandMenu.WordFilter);
     }
 }
 
